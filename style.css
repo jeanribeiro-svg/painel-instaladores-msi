@@ -76,3 +76,6 @@
 .media-table .link-cell{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:clip;}
 .media-table .media-link-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .media-table .copy-link{flex:0 0 auto;}
+
+/* v25 */
+#statusFilter.status-filter-fabricante{background:#eaf3ff !important;color:#1769c2 !important;border-color:#1769c2 !important;font-weight:700;}
