@@ -39,3 +39,16 @@ Esta versão usa um nome de script novo (`script-v4.js`) e um parâmetro de vers
 - Remove automaticamente a linha de cabeçalho `Software | Status` caso ela seja retornada como dado.
 - Normaliza os status para que variações de espaços, maiúsculas/minúsculas e barra invertida não quebrem a contagem.
 - O dashboard conta os status canônicos e alimenta cards, progresso, gráfico e filtro.
+
+
+## Página Mídias / Downloads
+
+A versão 6 adiciona a página **Mídias / Downloads**, alimentada pela aba `Midias` do mesmo Google Sheets.
+
+Crie a aba `Midias` com exatamente estas colunas:
+
+`Software | Tipo | Link | Observação`
+
+A página permite pesquisar por software, filtrar por tipo e abrir o endereço informado. URLs HTTP/HTTPS são abertas em nova aba. Caminhos de rede UNC (`\\servidor\pasta`) são convertidos para `file://` quando o navegador permitir.
+
+Por padrão, o painel tenta localizar a aba pelo nome `Midias`. Se preferir usar o GID da aba, preencha `GOOGLE_SHEET_MIDIAS_GID` no `script-v6.js`.
