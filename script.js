@@ -96,36 +96,48 @@ async function loadData(){
       fetchCsv(CONFIG.GOOGLE_SHEET_CSV_URL).then(parseSheetData),
       fetchGoogleJsonp()
     ]);
+    const csvResult=results[0], gvizResult=results[1];
     const valid=results.filter(r=>r.status==="fulfilled"&&r.value&&Array.isArray(r.value.rows));
     if(!valid.length)throw new Error("Nenhuma fonte do Google Sheets retornou dados.");
-    // Usa a resposta que contém mais registros. Isso evita perder linhas quando a
-    // publicação CSV estiver defasada/incompleta em relação à consulta GViz.
-    // Une as duas fontes por software, em vez de descartar uma delas. Assim,
-    // uma publicação parcial do CSV não faz linhas desaparecerem.
-    const merged=new Map();
-    valid.forEach(source=>source.value.rows.forEach(r=>{
-      const software=normalize(r.software), key=software.toLocaleLowerCase("pt-BR");
-      if(!software)return;
-      const status=canonicalStatus(r.status);
-      if(!merged.has(key)) merged.set(key,{software,status});
-      else if(!merged.get(key).status && status) merged.get(key).status=status;
-      else if(merged.get(key).status!==STATUS.DISPONIVEL && status===STATUS.DISPONIVEL) merged.get(key).status=status;
-    }));
-    allRows=[...merged.values()].filter(r=>r.software&&!isHeaderRow(r.software,r.status));
-    hasLoadedData=true;updateDashboard();setLastUpdate(new Date().toLocaleString("pt-BR"));setConnection("Conectado","ok");
-    const bestSource = valid.reduce((best, current) => current.value.rows.length > best.value.rows.length ? current : best, valid[0]);
-    if(bestSource.value.empty)showError("A planilha foi acessada, mas ainda não há softwares cadastrados.","warning");else hideError();
-    if(valid.length>1&&valid.some(r=>r.value.rows.length!==bestSource.value.rows.length))console.info("Google Sheets: foi utilizada a combinação das fontes disponíveis para preservar os registros.");
-  }catch(error){console.error("Falha ao carregar dados:",error);setConnection("Sem conexão com a planilha","error");setLastUpdate("Não atualizada");updateDashboard();if(hasLoadedData)showError("Não foi possível atualizar os dados agora. Os dados anteriores continuam sendo exibidos.","warning");else{showError("Não foi possível obter os dados da planilha. Verifique se a publicação do Google Sheets está ativa e tente novamente.","error");renderEmptyState("Não foi possível carregar os dados.");}}
-}
 
+    // O CSV publicado é a fonte principal do catálogo. O GViz fica como contingência.
+    const bestSource=csvResult.status==="fulfilled"?csvResult:valid[0];
+    allRows=bestSource.value.rows
+      .map(r=>({software:normalize(r.software),status:canonicalStatus(r.status)}))
+      .filter(r=>r.software&&!isHeaderRow(r.software,r.status));
+
+    hasLoadedData=true;updateDashboard();
+    setLastUpdate(new Date().toLocaleString("pt-BR"));setConnection(`Conectado • ${allRows.length} registros`,"ok");
+    if(bestSource.value.empty)showError("A planilha foi acessada, mas ainda não há softwares cadastrados.","warning");
+    else hideError();
+    if(csvResult.status==="fulfilled"&&gvizResult.status==="fulfilled"&&csvResult.value.rows.length!==gvizResult.value.rows.length)
+      console.info(`Google Sheets: CSV/GViz divergentes. Foi utilizada a fonte CSV (${csvResult.value.rows.length} registros).`);
+  }catch(error){
+    console.error("Falha ao carregar dados:",error);setConnection("Sem conexão com a planilha","error");setLastUpdate("Não atualizada");updateDashboard();
+    if(hasLoadedData)showError("Não foi possível atualizar os dados agora. Os dados anteriores continuam sendo exibidos.","warning");
+    else{showError("Não foi possível obter os dados da planilha. Verifique se a publicação do Google Sheets está ativa e tente novamente.","error");renderEmptyState("Não foi possível carregar os dados.");}
+  }
+}
 function loadMedia(){
   if($("mediaResultCount"))$("mediaResultCount").textContent="Consultando mídias...";
   return fetchCsv(CONFIG.MIDIAS_CSV_URL).then(text=>{const parsed=parseCSV(text.replace(/^\uFEFF/,""));if(!parsed.length)throw new Error("CSV vazio");const headers=parsed[0].map(normalize).map(x=>x.toLowerCase());let idx=headers.indexOf("software"),tipo=headers.indexOf("tipo"),link=headers.indexOf("link"),obs=headers.indexOf("observação");if(obs<0)obs=headers.indexOf("observacao");if(idx<0)idx=0;if(tipo<0)tipo=1;if(link<0)link=2;if(obs<0)obs=3;mediaRows=parsed.slice(1).map(r=>({software:normalize(r[idx]),tipo:normalize(r[tipo]),link:normalize(r[link]),observacao:normalize(r[obs])})).filter(r=>r.software||r.link);mediaLoaded=true;populateTypes();renderMedia();$("mediaResultCount").textContent=`${mediaRows.length} registro${mediaRows.length===1?'':'s'}`;if(hasLoadedData)hideError();}).catch(e=>{console.error(e);mediaLoaded=false;renderMediaError("Não foi possível carregar os dados da aba Midias. Verifique a publicação da planilha.");});
 }
 
 function statusClass(status){if(status===STATUS.DISPONIVEL||status===STATUS.FABRICANTE)return"available";if(status===STATUS.CONSULTA)return"consulta";if(status===STATUS.SEM_PACOTE)return"none";return"unknown";}
-function updateDashboard(){const total=allRows.length,consulta=allRows.filter(r=>r.status===STATUS.CONSULTA).length,semPacote=allRows.filter(r=>r.status===STATUS.SEM_PACOTE).length,disponivel=allRows.filter(r=>r.status===STATUS.DISPONIVEL).length,percent=total?disponivel/total*100:0;$("total").textContent=total;$("emConsulta").textContent=consulta;$("semPacote").textContent=semPacote;$("disponivel").textContent=disponivel;$("progressPercent").textContent=`${percent.toFixed(1)}%`;$("progressBar").style.width=`${percent}%`;const a=total?consulta/total*360:0,b=total?semPacote/total*360:0;$("donut").style.background=`conic-gradient(#d99a20 0deg ${a}deg,#d15b5b ${a}deg ${a+b}deg,#1769c2 ${a+b}deg 360deg)`;$("legend").innerHTML=`<div><span class="dot consulta-dot"></span>Em Consulta <b>${consulta}</b></div><div><span class="dot none-dot"></span>Sem pacote oficial <b>${semPacote}</b></div><div><span class="dot available-dot"></span>Disponível no \\Mídias <b>${disponivel}</b></div>`;renderTable();}
+function updateDashboard(){
+  const total=allRows.length,
+    consulta=allRows.filter(r=>r.status===STATUS.CONSULTA).length,
+    semPacote=allRows.filter(r=>r.status===STATUS.SEM_PACOTE).length,
+    disponivel=allRows.filter(r=>r.status===STATUS.DISPONIVEL).length,
+    fabricante=allRows.filter(r=>r.status===STATUS.FABRICANTE).length,
+    percent=total?disponivel/total*100:0;
+  $("total").textContent=total;$("emConsulta").textContent=consulta;$("semPacote").textContent=semPacote;$("disponivel").textContent=disponivel;$("fabricante").textContent=fabricante;
+  $("progressPercent").textContent=`${percent.toFixed(1)}%`;$('progressBar').style.width=`${percent}%`;
+  const a=total?consulta/total*360:0,b=total?semPacote/total*360:0,c=total?disponivel/total*360:0,d=total?fabricante/total*360:0;
+  $("donut").style.background=`conic-gradient(#d99a20 0deg ${a}deg,#d15b5b ${a}deg ${a+b}deg,#1769c2 ${a+b}deg ${a+b+c}deg,#1769c2 ${a+b+c}deg ${a+b+c+d}deg)`;
+  $("legend").innerHTML=`<div><span class="dot consulta-dot"></span>Em Consulta <b>${consulta}</b></div><div><span class="dot none-dot"></span>Sem pacote oficial <b>${semPacote}</b></div><div><span class="dot available-dot"></span>Disponível no Mídias <b>${disponivel}</b></div><div><span class="dot available-dot"></span>Disponível pelo Fabricante <b>${fabricante}</b></div>`;
+  renderTable();
+}
 function renderEmptyState(message){$("softwareTable").innerHTML=`<tr><td colspan="2" class="empty">${escapeHtml(message)}</td></tr>`;$("resultCount").textContent="0 registros";}
 function renderTable(){const search=normalize($("search")?.value).toLowerCase(),filter=canonicalStatus($("statusFilter")?.value);const rows=allRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||r.status===filter));$("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;$("softwareTable").innerHTML=rows.length?rows.map(r=>`<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td></tr>`).join(""):`<tr><td colspan="2" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;}
 function updateStatusFilterStyle(){const sel=$("statusFilter");if(!sel)return;sel.classList.remove("status-filter-consulta","status-filter-none","status-filter-available","status-filter-fabricante");const v=canonicalStatus(sel.value);if(v===STATUS.CONSULTA)sel.classList.add("status-filter-consulta");else if(v===STATUS.SEM_PACOTE)sel.classList.add("status-filter-none");else if(v===STATUS.DISPONIVEL)sel.classList.add("status-filter-available");else if(v===STATUS.FABRICANTE)sel.classList.add("status-filter-fabricante");}
