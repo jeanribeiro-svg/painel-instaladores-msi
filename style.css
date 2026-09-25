@@ -79,3 +79,11 @@
 
 /* v25 */
 #statusFilter.status-filter-fabricante{background:#eaf3ff !important;color:#1769c2 !important;border-color:#1769c2 !important;font-weight:700;}
+
+/* v26: tabela de mídias mais compacta */
+.media-table .col-media-software{width:22%;}
+.media-table .col-media-type{width:12%;}
+.media-table .col-media-link{width:41%;}
+.media-table .col-media-obs{width:25%;}
+.media-table .link-cell{display:flex;align-items:center;gap:8px;min-width:0;}
+.media-table .copy-link{flex:0 0 auto;white-space:nowrap;padding:6px 9px;font-size:12px;}
