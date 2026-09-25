@@ -58,3 +58,10 @@
 .status.available{background:#1769c2 !important;color:#fff !important;border-color:#1769c2 !important;}
 .software-table th,.software-table td{white-space:nowrap;}
 .media-table th,.media-table td{white-space:nowrap;}
+
+/* v18: filtro de status com a mesma identidade visual do gráfico */
+#statusFilter.status-filter-available{background:#eaf3ff !important;color:#1769c2 !important;border-color:#1769c2 !important;font-weight:700;}
+#statusFilter.status-filter-consulta{background:#fff5d9 !important;color:#8a5a00 !important;border-color:#d99a20 !important;font-weight:700;}
+#statusFilter.status-filter-none{background:#fdeaea !important;color:#a32929 !important;border-color:#d15b5b !important;font-weight:700;}
+#statusFilter option{background:#fff;color:#182230;font-weight:400;}
+#statusFilter option:checked{background:#1769c2;color:#fff;}
