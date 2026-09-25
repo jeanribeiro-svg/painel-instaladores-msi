@@ -31,17 +31,17 @@
     <section class="panel table-panel">
       <div class="table-head"><div><span class="section-kicker">Catálogo</span><h2>Softwares cadastrados</h2><p class="muted" id="resultCount">0 registros</p></div><div class="actions"><button id="refreshButton" type="button">↻ Atualizar agora</button><button id="mediaButton" class="secondary" type="button">Ver mídias / downloads →</button></div></div>
       <div class="filters"><label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label><label>Status<select id="statusFilter"><option value="">Todos os status</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option><option value="Disponível no \\Mídias">Disponível no \\Mídias</option></select></label></div>
-      <div class="table-wrap"><table><thead><tr><th>Software</th><th>Status</th></tr></thead><tbody id="softwareTable"><tr><td colspan="2" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="software-table"><colgroup><col class="col-software"><col class="col-status"></colgroup><thead><tr><th>Software</th><th>Status</th></tr></thead><tbody id="softwareTable"><tr><td colspan="2" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
     </section>
   </section>
   <section id="page-midias" class="page hidden-page">
     <section class="panel table-panel">
       <div class="table-head"><div><span class="section-kicker">Biblioteca</span><h2>Mídias / Downloads</h2><p class="muted" id="mediaResultCount">0 registros</p></div><div class="actions"><button id="mediaBackButton" class="secondary" type="button">← Dashboard</button><button id="mediaRefreshButton" type="button">↻ Atualizar agora</button></div></div>
       <div class="filters"><label>Pesquisar software<input id="mediaSearch" type="search" placeholder="Digite o nome do software..."></label><label>Tipo<select id="mediaTypeFilter"><option value="">Todos os tipos</option></select></label></div>
-      <div class="table-wrap"><table><thead><tr><th>Software</th><th>Tipo</th><th>Link</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="mediaTable"><tr><td colspan="5" class="empty">Preparando consulta à aba Midias...</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="media-table"><colgroup><col class="col-media-software"><col class="col-media-type"><col class="col-media-link"><col class="col-media-obs"><col class="col-media-action"></colgroup><thead><tr><th>Software</th><th>Tipo</th><th>Link</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="mediaTable"><tr><td colspan="5" class="empty">Preparando consulta à aba Midias...</td></tr></tbody></table></div>
     </section>
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script-v14.js?v=20260925-12"></script>
+<script src="script-v16.js?v=20260925-16"></script>
 </body></html>
