@@ -3,18 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Painel de acompanhamento de instaladores MSI e disponibilidade de pacotes.">
   <title>Painel de Instaladores MSI</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <h1>Painel de Instaladores MSI</h1>
-      <p>Acompanhamento dos softwares e disponibilidade de pacotes para implantação em massa</p>
+    <div class="brand">
+      <div class="brand-icon">MSI</div>
+      <div>
+        <h1>Painel de Instaladores MSI</h1>
+        <p>Acompanhamento de softwares e disponibilidade de pacotes para implantação em massa</p>
+      </div>
     </div>
     <div class="update-box">
       <span>Última atualização</span>
-      <strong id="lastUpdate">Carregando...</strong>
+      <strong id="lastUpdate">Aguardando...</strong>
+      <button id="retryButton" class="update-button">Atualizar agora</button>
     </div>
   </header>
 
@@ -22,79 +27,34 @@
     <div id="errorBox" class="error-box hidden"></div>
 
     <section class="cards">
-      <article class="card">
-        <span>Total de softwares</span>
-        <strong id="total">0</strong>
-      </article>
-      <article class="card">
-        <span>Em Consulta</span>
-        <strong id="emConsulta">0</strong>
-      </article>
-      <article class="card">
-        <span>Sem pacote oficial</span>
-        <strong id="semPacote">0</strong>
-      </article>
-      <article class="card highlight">
-        <span>Disponível no \Mídias</span>
-        <strong id="disponivel">0</strong>
-      </article>
+      <article class="card"><span>Total de softwares</span><strong id="total">0</strong><small>cadastrados na planilha</small></article>
+      <article class="card"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
+      <article class="card"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
+      <article class="card highlight"><span>Disponível no \Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
     </section>
 
     <section class="overview">
-      <div class="panel">
-        <div class="panel-title">
-          <h2>Progresso</h2>
-          <strong id="progressPercent">0%</strong>
-        </div>
-        <div class="progress-track">
-          <div id="progressBar" class="progress-bar"></div>
-        </div>
-        <p class="muted">Percentual de softwares com pacote disponível no \Mídias.</p>
+      <div class="panel progress-panel">
+        <div class="panel-title"><div><h2>Progresso da coleta</h2><p class="muted">Percentual de softwares com pacote disponível no \Mídias.</p></div><strong id="progressPercent" class="percent">0%</strong></div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div class="progress-scale"><span>0%</span><span>100%</span></div>
       </div>
-
       <div class="panel chart-panel">
-        <h2>Distribuição por status</h2>
-        <div class="donut-wrap">
-          <div id="donut" class="donut"></div>
-          <div id="legend" class="legend"></div>
-        </div>
+        <div class="panel-title"><h2>Distribuição por status</h2></div>
+        <div class="donut-wrap"><div id="donut" class="donut"></div><div id="legend" class="legend"></div></div>
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel table-panel">
       <div class="table-head">
-        <div>
-          <h2>Softwares</h2>
-          <p class="muted" id="resultCount">0 registros</p>
-        </div>
-        <div class="filters">
-          <input id="search" type="search" placeholder="Pesquisar software...">
-          <select id="statusFilter">
-            <option value="">Todos os status</option>
-            <option value="Em Consulta">Em Consulta</option>
-            <option value="Sem pacote oficial">Sem pacote oficial</option>
-            <option value="Disponível no \Mídias">Disponível no \Mídias</option>
-          </select>
-        </div>
+        <div><h2>Softwares</h2><p class="muted" id="resultCount">0 registros</p></div>
+        <div class="filters"><input id="search" type="search" placeholder="Pesquisar software..." aria-label="Pesquisar software"><select id="statusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option><option value="Disponível no \\Mídias">Disponível no \\Mídias</option></select></div>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Software</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="softwareTable">
-            <tr><td colspan="2" class="empty">Carregando dados...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table><thead><tr><th>Software</th><th>Status</th></tr></thead><tbody id="softwareTable"><tr><td colspan="2" class="empty">Inicializando painel...</td></tr></tbody></table></div>
+      <div class="source-line" id="sourceStatus">Fonte: Google Sheets • aguardando conexão</div>
     </section>
   </main>
-
-  <footer>Dados carregados diretamente da planilha publicada no Google Sheets • Atualização automática a cada 30 segundos</footer>
+  <footer>Dados carregados do Google Sheets • atualização automática a cada 30 segundos</footer>
   <script src="script.js"></script>
 </body>
 </html>

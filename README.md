@@ -1,28 +1,16 @@
-# Painel de Instaladores MSI — versão robusta
+# Painel de Instaladores MSI
 
-## Fonte CSV
+Dashboard estático para GitHub Pages, alimentado pela planilha Google Sheets.
 
-https://docs.google.com/spreadsheets/d/e/2PACX-1vTkjRpZsinwht385Qhwt5-vK-Lvmf5QN88ttP07XzvX6tvNOrLwkr8NaSTHpFGfo1NiwuoR0oUP22I_/pub?gid=474438347&single=true&output=csv
+## Fonte de dados
+- Aba: `Softwares`
+- Colunas: `Software` e `Status`
+- Status esperados: `Em Consulta`, `Sem pacote oficial`, `Disponível no \\Mídias`
 
-## Comportamento em caso de falha
+## Carregamento dos dados
+O painel tenta primeiro o CSV publicado no Google Sheets. Se o navegador bloquear a requisição por CORS ou houver falha no CSV, ele tenta uma segunda forma de leitura usando a API pública de visualização do Google Sheets (JSONP). Isso evita que o painel fique indefinidamente em “Carregando...”.
 
-O painel foi preparado para **não ficar em branco**:
+Se a planilha estiver vazia, o painel continua funcionando e informa a situação. Se uma atualização falhar depois de dados já terem sido carregados, os dados anteriores permanecem na tela.
 
-- Se a planilha estiver vazia, os indicadores aparecem como `0` e a tabela informa que não há softwares cadastrados.
-- Se a planilha estiver temporariamente indisponível antes do primeiro carregamento, o painel mostra uma mensagem e continua tentando.
-- Se uma atualização posterior falhar, os dados anteriormente carregados são mantidos na tela.
-- Existe timeout de 10 segundos para evitar carregamento indefinido.
-- Erros de HTTP, CSV vazio e cabeçalhos incorretos são apresentados na própria página.
-- A atualização automática continua a cada 30 segundos.
-
-## Estrutura da planilha
-
-A aba publicada deve possuir os cabeçalhos:
-
-`Software` | `Status`
-
-Status esperados:
-
-- `Em Consulta`
-- `Sem pacote oficial`
-- `Disponível no \\Mídias`
+## Publicação
+Envie os quatro arquivos para o repositório do GitHub Pages e mantenha `index.html` na raiz.

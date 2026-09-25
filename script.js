@@ -1,5 +1,7 @@
 const CONFIG = {
   GOOGLE_SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkjRpZsinwht385Qhwt5-vK-Lvmf5QN88ttP07XzvX6tvNOrLwkr8NaSTHpFGfo1NiwuoR0oUP22I_/pub?gid=474438347&single=true&output=csv",
+  GOOGLE_SHEET_ID: "1-ZQQLvMGEDSwDRiigtNo2vvCZhoS3OUdgK0423gW-Jg",
+  GOOGLE_SHEET_GID: "474438347",
   REFRESH_INTERVAL_MS: 30000,
   REQUEST_TIMEOUT_MS: 10000
 };
@@ -12,171 +14,182 @@ const STATUS = {
 
 let allRows = [];
 let hasLoadedData = false;
+let loading = false;
 
-function $(id) {
-  return document.getElementById(id);
+function $(id) { return document.getElementById(id); }
+function normalize(value) { return String(value ?? "").trim(); }
+
+function setLastUpdate(text, state = "") {
+  const el = $("lastUpdate");
+  if (!el) return;
+  el.textContent = text;
+  el.className = state;
 }
 
-function showError(message) {
+function showError(message, type = "error") {
   const box = $("errorBox");
   if (!box) return;
   box.textContent = message;
-  box.classList.remove("hidden");
+  box.className = `error-box ${type}`;
 }
 
 function hideError() {
   const box = $("errorBox");
-  if (box) box.classList.add("hidden");
+  if (box) box.className = "error-box hidden";
 }
 
-function setLastUpdate(text) {
-  if ($("lastUpdate")) $("lastUpdate").textContent = text;
+function setLoading(isLoading) {
+  loading = isLoading;
+  const btn = $("retryButton");
+  if (btn) {
+    btn.disabled = isLoading;
+    btn.textContent = isLoading ? "Atualizando..." : "Atualizar agora";
+  }
+  document.body.classList.toggle("is-loading", isLoading);
 }
 
 function parseCSV(text) {
   const rows = [];
-  let row = [];
-  let cell = "";
-  let quoted = false;
-
+  let row = [], cell = "", quoted = false;
   for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    const next = text[i + 1];
-
+    const c = text[i], next = text[i + 1];
     if (c === '"') {
-      if (quoted && next === '"') {
-        cell += '"';
-        i++;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (c === "," && !quoted) {
-      row.push(cell);
-      cell = "";
-    } else if ((c === "\n" || c === "\r") && !quoted) {
-      if (c === "\r" && next === "\n") i++;
-      row.push(cell);
-      cell = "";
-      if (row.some(v => String(v).trim() !== "")) rows.push(row);
+      if (quoted && next === '"') { cell += '"'; i++; }
+      else quoted = !quoted;
+    } else if (c === ',' && !quoted) {
+      row.push(cell); cell = "";
+    } else if ((c === '\n' || c === '\r') && !quoted) {
+      if (c === '\r' && next === '\n') i++;
+      row.push(cell); cell = "";
+      if (row.some(v => normalize(v) !== "")) rows.push(row);
       row = [];
-    } else {
-      cell += c;
-    }
+    } else cell += c;
   }
-
   if (cell.length || row.length) {
     row.push(cell);
-    if (row.some(v => String(v).trim() !== "")) rows.push(row);
+    if (row.some(v => normalize(v) !== "")) rows.push(row);
   }
-
   return rows;
 }
 
-function normalize(value) {
-  return String(value ?? "").trim();
-}
-
-function isHeaderRow(headers) {
-  const normalized = headers.map(h => normalize(h).toLowerCase());
-  return normalized.includes("software") && normalized.includes("status");
-}
-
 function parseSheetData(text) {
-  const parsed = parseCSV(text);
-
-  // A completely empty publication is a valid "empty sheet" state.
-  if (!parsed.length) {
-    return { rows: [], empty: true };
-  }
+  const parsed = parseCSV(text.replace(/^\uFEFF/, ""));
+  if (!parsed.length) return { rows: [], empty: true };
 
   const headers = parsed[0].map(normalize);
   const softwareIndex = headers.findIndex(h => h.toLowerCase() === "software");
   const statusIndex = headers.findIndex(h => h.toLowerCase() === "status");
-
-  if (!isHeaderRow(headers) || softwareIndex === -1 || statusIndex === -1) {
-    throw new Error(
-      `Cabeçalhos inválidos. Encontrados: ${headers.join(" | ")}. ` +
-      'A primeira linha deve conter "Software" e "Status".'
-    );
+  if (softwareIndex < 0 || statusIndex < 0) {
+    throw new Error(`Cabeçalhos inválidos. Encontrados: ${headers.join(" | ")}`);
   }
 
-  const rows = parsed.slice(1)
-    .map(r => ({
-      software: normalize(r[softwareIndex]),
-      status: normalize(r[statusIndex])
-    }))
-    .filter(r => r.software);
+  const rows = parsed.slice(1).map(r => ({
+    software: normalize(r[softwareIndex]),
+    status: normalize(r[statusIndex])
+  })).filter(r => r.software);
 
   return { rows, empty: rows.length === 0 };
 }
 
-async function fetchWithTimeout(url) {
+async function fetchCsv() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
-
   try {
-    return await fetch(url, {
-      cache: "no-store",
-      mode: "cors",
-      signal: controller.signal
-    });
+    const url = CONFIG.GOOGLE_SHEET_CSV_URL + `&_=${Date.now()}`;
+    const response = await fetch(url, { cache: "no-store", mode: "cors", signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    if (!text.trim()) return { rows: [], empty: true, method: "CSV" };
+    return { ...parseSheetData(text), method: "CSV" };
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function loadData() {
-  try {
-    const separator = CONFIG.GOOGLE_SHEET_CSV_URL.includes("?") ? "&" : "?";
-    const url = CONFIG.GOOGLE_SHEET_CSV_URL + separator + "_=" + Date.now();
+function fetchGvizJsonp() {
+  return new Promise((resolve, reject) => {
+    const callbackName = `__sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    let finished = false;
+    const timeout = setTimeout(() => finish(new Error("tempo limite do Google Sheets excedido")), CONFIG.REQUEST_TIMEOUT_MS);
 
-    const response = await fetchWithTimeout(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+    function finish(error, data) {
+      if (finished) return;
+      finished = true;
+      cleanup();
+      error ? reject(error) : resolve(data);
     }
 
-    const text = await response.text();
-    const result = parseSheetData(text);
+    window[callbackName] = payload => {
+      try {
+        const table = payload?.table;
+        if (!table?.cols) throw new Error("Resposta do Google Sheets sem estrutura de tabela.");
+        const headers = table.cols.map(c => normalize(c.label || c.id));
+        const softwareIndex = headers.findIndex(h => h.toLowerCase() === "software");
+        const statusIndex = headers.findIndex(h => h.toLowerCase() === "status");
+        if (softwareIndex < 0 || statusIndex < 0) throw new Error(`Colunas encontradas: ${headers.join(" | ")}`);
+        const rows = (table.rows || []).map(r => ({
+          software: normalize(r.c?.[softwareIndex]?.v),
+          status: normalize(r.c?.[statusIndex]?.v)
+        })).filter(r => r.software);
+        finish(null, { rows, empty: rows.length === 0, method: "Google Visualization" });
+      } catch (e) { finish(e); }
+    };
 
-    // Only replace current data after a successful parse.
-    // Thus, a temporary network failure won't erase already loaded data.
+    const params = `gid=${encodeURIComponent(CONFIG.GOOGLE_SHEET_GID)}&tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&_=${Date.now()}`;
+    script.src = `https://docs.google.com/spreadsheets/d/${CONFIG.GOOGLE_SHEET_ID}/gviz/tq?${params}`;
+    script.onerror = () => finish(new Error("Google Sheets bloqueou ou não disponibilizou a consulta JSONP."));
+    document.head.appendChild(script);
+  });
+}
+
+async function loadData() {
+  if (loading) return;
+  setLoading(true);
+  setLastUpdate("Atualizando...", "loading");
+
+  try {
+    let result;
+    let firstError = null;
+    try {
+      result = await fetchCsv();
+    } catch (e) {
+      firstError = e;
+      result = await fetchGvizJsonp();
+    }
+
     allRows = result.rows;
     hasLoadedData = true;
-
     updateDashboard();
-    setLastUpdate(new Date().toLocaleString("pt-BR"));
+    setLastUpdate(new Date().toLocaleString("pt-BR"), "ok");
 
     if (result.empty) {
-      showError("A planilha está acessível, mas não possui softwares cadastrados no momento.");
+      showError("A planilha está acessível, mas não possui softwares cadastrados no momento.", "warning");
     } else {
       hideError();
     }
+
+    const source = $("sourceStatus");
+    if (source) source.textContent = `Fonte: Google Sheets • ${result.method}`;
   } catch (error) {
     console.error("Erro ao carregar a planilha:", error);
-
-    // Keep the dashboard usable even if the refresh fails.
     updateDashboard();
-
-    let detail = error?.message || "Erro desconhecido";
-    if (error?.name === "AbortError") {
-      detail = "tempo limite de 10 segundos excedido";
-    }
+    setLastUpdate("Não atualizada", "error");
+    const detail = error?.name === "AbortError" ? "tempo limite excedido" : (error?.message || "erro desconhecido");
 
     if (hasLoadedData) {
-      showError(
-        "Não foi possível atualizar a planilha agora. " +
-        "Os dados carregados anteriormente continuam sendo exibidos. " +
-        `Detalhe: ${detail}`
-      );
+      showError(`Falha na atualização. Os dados anteriores continuam sendo exibidos. Detalhe: ${detail}`, "warning");
     } else {
-      showError(
-        "A página foi carregada, mas a planilha não está disponível no momento. " +
-        "O painel continuará tentando novamente automaticamente. " +
-        `Detalhe: ${detail}`
-      );
-      renderEmptyState("Aguardando dados da planilha...");
+      showError(`Não foi possível carregar os dados da planilha. O painel continuará tentando automaticamente. Detalhe: ${detail}`, "error");
+      renderEmptyState("Não foi possível carregar os dados. Verifique a publicação da planilha e tente novamente.");
     }
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -184,7 +197,7 @@ function statusClass(status) {
   if (status === STATUS.DISPONIVEL) return "available";
   if (status === STATUS.CONSULTA) return "consulta";
   if (status === STATUS.SEM_PACOTE) return "none";
-  return "";
+  return "unknown";
 }
 
 function updateDashboard() {
@@ -194,98 +207,59 @@ function updateDashboard() {
   const disponivel = allRows.filter(r => r.status === STATUS.DISPONIVEL).length;
   const percent = total ? (disponivel / total) * 100 : 0;
 
-  if ($("total")) $("total").textContent = total;
-  if ($("emConsulta")) $("emConsulta").textContent = consulta;
-  if ($("semPacote")) $("semPacote").textContent = semPacote;
-  if ($("disponivel")) $("disponivel").textContent = disponivel;
-  if ($("progressPercent")) $("progressPercent").textContent = percent.toFixed(1) + "%";
-  if ($("progressBar")) $("progressBar").style.width = percent + "%";
+  $("total").textContent = total;
+  $("emConsulta").textContent = consulta;
+  $("semPacote").textContent = semPacote;
+  $("disponivel").textContent = disponivel;
+  $("progressPercent").textContent = `${percent.toFixed(1)}%`;
+  $("progressBar").style.width = `${percent}%`;
 
-  const a = total ? (consulta / total) * 360 : 0;
-  const b = total ? (semPacote / total) * 360 : 0;
+  const a = total ? consulta / total * 360 : 0;
+  const b = total ? semPacote / total * 360 : 0;
+  const donut = $("donut");
+  donut.style.background = total
+    ? `conic-gradient(#e3a72f 0deg ${a}deg, #d15b5b ${a}deg ${a + b}deg, #1769c2 ${a + b}deg 360deg)`
+    : `conic-gradient(#e8edf4 0deg 360deg)`;
 
-  if ($("donut")) {
-    $("donut").style.background =
-      `conic-gradient(#e3a72f 0deg ${a}deg, #d15b5b ${a}deg ${a + b}deg, #1769c2 ${a + b}deg 360deg)`;
-  }
-
-  if ($("legend")) {
-    $("legend").innerHTML = `
-      <div class="legend-item"><span class="dot" style="background:#e3a72f"></span>Em Consulta: ${consulta}</div>
-      <div class="legend-item"><span class="dot" style="background:#d15b5b"></span>Sem pacote oficial: ${semPacote}</div>
-      <div class="legend-item"><span class="dot" style="background:#1769c2"></span>Disponível no \\Mídias: ${disponivel}</div>
-    `;
-  }
+  $("legend").innerHTML = `
+    <div class="legend-item"><span class="dot consulta-dot"></span><span>Em Consulta</span><strong>${consulta}</strong></div>
+    <div class="legend-item"><span class="dot none-dot"></span><span>Sem pacote oficial</span><strong>${semPacote}</strong></div>
+    <div class="legend-item"><span class="dot available-dot"></span><span>Disponível no \\Mídias</span><strong>${disponivel}</strong></div>`;
 
   renderTable();
 }
 
 function renderEmptyState(message) {
   const tbody = $("softwareTable");
-  if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="2" class="empty">${escapeHtml(message)}</td></tr>`;
-  }
+  if (tbody) tbody.innerHTML = `<tr><td colspan="2" class="empty"><div class="empty-title">${escapeHtml(message)}</div><button id="emptyRetry" class="secondary-button">Tentar novamente</button></td></tr>`;
   if ($("resultCount")) $("resultCount").textContent = "0 registros";
+  setTimeout(() => { $("emptyRetry")?.addEventListener("click", loadData); }, 0);
 }
 
 function renderTable() {
-  const searchElement = $("search");
-  const filterElement = $("statusFilter");
-
-  const search = normalize(searchElement?.value).toLowerCase();
-  const filter = normalize(filterElement?.value);
-
-  const rows = allRows.filter(r => {
-    const matchSearch = !search || r.software.toLowerCase().includes(search);
-    const matchStatus = !filter || r.status === filter;
-    return matchSearch && matchStatus;
-  });
-
-  if ($("resultCount")) {
-    $("resultCount").textContent =
-      `${rows.length} registro${rows.length === 1 ? "" : "s"}`;
-  }
-
+  const search = normalize($("search")?.value).toLowerCase();
+  const filter = normalize($("statusFilter")?.value);
+  const rows = allRows.filter(r => (!search || r.software.toLowerCase().includes(search)) && (!filter || r.status === filter));
+  $("resultCount").textContent = `${rows.length} registro${rows.length === 1 ? "" : "s"}`;
   const tbody = $("softwareTable");
-  if (!tbody) return;
-
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="2" class="empty">${
-      allRows.length ? "Nenhum software encontrado para os filtros atuais." : "Nenhum software cadastrado."
-    }</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="2" class="empty">${allRows.length ? "Nenhum software encontrado para os filtros atuais." : "Nenhum software cadastrado."}</td></tr>`;
     return;
   }
-
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${escapeHtml(r.software)}</td>
-      <td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status || "Sem status")}</span></td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = rows.map(r => `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status || "Sem status")}</span></td></tr>`).join("");
 }
 
 function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
 function initDashboard() {
-  // The HTML remains usable even if JavaScript fails later.
-  if ($("search")) $("search").addEventListener("input", renderTable);
-  if ($("statusFilter")) $("statusFilter").addEventListener("change", renderTable);
-
-  // Establish a valid visual state before the first network request.
+  $("search")?.addEventListener("input", renderTable);
+  $("statusFilter")?.addEventListener("change", renderTable);
+  $("retryButton")?.addEventListener("click", loadData);
   updateDashboard();
   loadData();
   setInterval(loadData, CONFIG.REFRESH_INTERVAL_MS);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initDashboard);
-} else {
-  initDashboard();
-}
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initDashboard) : initDashboard();
