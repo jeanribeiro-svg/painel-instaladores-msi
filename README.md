@@ -51,4 +51,12 @@ Crie a aba `Midias` com exatamente estas colunas:
 
 A página permite pesquisar por software, filtrar por tipo e abrir o endereço informado. URLs HTTP/HTTPS são abertas em nova aba. Caminhos de rede UNC (`\\servidor\pasta`) são convertidos para `file://` quando o navegador permitir.
 
-Por padrão, o painel tenta localizar a aba pelo nome `Midias`. Se preferir usar o GID da aba, preencha `GOOGLE_SHEET_MIDIAS_GID` no `script-v6.js`.
+Por padrão, o painel tenta localizar a aba pelo nome `Midias`. Se preferir usar o GID da aba, preencha `GOOGLE_SHEET_MIDIAS_GID` no `script-v7.js`.
+
+
+## v7
+- Corrige o filtro do status `Disponível no \Mídias`, normalizando barras invertidas.
+- Adiciona acesso mais evidente à página Mídias / Downloads.
+- O card de disponibilidade possui botão direto para Mídias / Downloads.
+- A aba `Midias` é carregada por nome via Google Visualization quando o GID não estiver informado; isso evita depender de parâmetros de CSV para selecionar a aba.
+- Estrutura esperada da aba `Midias`: `Software`, `Tipo`, `Link`, `Observação`.

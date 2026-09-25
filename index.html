@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="topbar">
-  <nav class="nav-tabs"><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a><a href="#midias" class="nav-link" data-page="midias">Mídias / Downloads</a></nav>
+  <nav class="nav-tabs" aria-label="Navegação principal"><a href="#dashboard" class="nav-link active" data-page="dashboard"><span>▦</span> Dashboard</a><a href="#midias" class="nav-link" data-page="midias"><span>↧</span> Mídias / Downloads</a></nav>
   <div class="brand">
     <span class="eyebrow">SESI • SENAI</span>
     <h1>Painel de Instaladores MSI</h1>
@@ -28,7 +28,7 @@
     <article class="card"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
     <article class="card"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
     <article class="card"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
-    <article class="card highlight"><span>Disponível no \\Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
+    <article class="card highlight"><span>Disponível no \\Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small><button id="openMidiasFromCard" class="card-link" type="button">Ver mídias / downloads →</button></article>
   </section>
 
   <section class="overview">
@@ -50,7 +50,7 @@
     </div>
     <div class="filters">
       <label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label>
-      <label>Status<select id="statusFilter"><option value="">Todos os status</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option><option value="Disponível no \\Mídias">Disponível no \\Mídias</option></select></label>
+      <label>Status<select id="statusFilter"><option value="">Todos os status</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option><option value="Disponível no \Mídias">Disponível no \\Mídias</option></select></label>
     </div>
     <div class="table-wrap"><table><thead><tr><th>Software</th><th>Status</th></tr></thead><tbody id="softwareTable"><tr><td colspan="2" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
   </section>
@@ -73,7 +73,7 @@
   </div>
 </section>
 
-<footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script-v6.js?v=20260925-6"></script>
+<footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
+<script src="script-v7.js?v=20260925-7"></script>
 </body>
 </html>
