@@ -65,3 +65,5 @@
 #statusFilter.status-filter-none{background:#fdeaea !important;color:#a32929 !important;border-color:#d15b5b !important;font-weight:700;}
 #statusFilter option{background:#fff;color:#182230;font-weight:400;}
 #statusFilter option:checked{background:#1769c2;color:#fff;}
+
+.media-actions{display:flex;gap:6px;align-items:center;white-space:nowrap}.browser-link{background:#fff!important;color:#1769c2!important;border:1px solid #1769c2!important}.browser-link:hover{background:#f1f6fb!important}
