@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Painel de acompanhamento de instaladores MSI - SESI e SENAI Santa Catarina">
+  <title>Painel de Instaladores MSI | SESI SENAI SC</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">MSI</div>
+      <div>
+        <h1>Painel de Instaladores MSI</h1>
+        <p>SESI • SENAI • Santa Catarina</p>
+      </div>
+    </div>
+    <div class="live-status">
+      <span class="live-dot"></span>
+      <span id="connectionStatus">Atualização automática</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">ACOMPANHAMENTO ESTADUAL</span>
+        <h2>Disponibilidade de instaladores para implantação em massa</h2>
+        <p>Os indicadores abaixo são carregados diretamente da Google Planilha e atualizados automaticamente.</p>
+      </div>
+      <div class="refresh-box">
+        <span>Última atualização</span>
+        <strong id="lastUpdate">Aguardando dados...</strong>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Resumo">
+      <article class="card card-total">
+        <div class="card-label">Total de softwares</div>
+        <div class="card-value" id="totalCount">0</div>
+        <div class="card-foot">registros na planilha</div>
+      </article>
+
+      <article class="card card-consulta">
+        <div class="card-label">Em Consulta</div>
+        <div class="card-value" id="consultaCount">0</div>
+        <div class="card-foot" id="consultaPercent">0% do total</div>
+      </article>
+
+      <article class="card card-sem-pacote">
+        <div class="card-label">Sem pacote oficial</div>
+        <div class="card-value" id="semPacoteCount">0</div>
+        <div class="card-foot" id="semPacotePercent">0% do total</div>
+      </article>
+
+      <article class="card card-midia">
+        <div class="card-label">Disponível no \Mídias</div>
+        <div class="card-value" id="midiaCount">0</div>
+        <div class="card-foot" id="midiaPercent">0% do total</div>
+      </article>
+    </section>
+
+    <section class="progress-section">
+      <div class="section-title">
+        <div>
+          <h3>Progresso da ação</h3>
+          <p>Percentual de softwares com instalador disponível em <code>\Mídias</code>.</p>
+        </div>
+        <strong id="progressText">0%</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Distribuição por status</h3>
+            <p>Visão geral dos registros encontrados.</p>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="donut" id="donutChart">
+            <div class="donut-center">
+              <strong id="donutTotal">0</strong>
+              <span>softwares</span>
+            </div>
+          </div>
+          <div class="legend">
+            <div><span class="legend-dot consulta"></span><span>Em Consulta</span><strong id="legendConsulta">0</strong></div>
+            <div><span class="legend-dot sem-pacote"></span><span>Sem pacote oficial</span><strong id="legendSemPacote">0</strong></div>
+            <div><span class="legend-dot midia"></span><span>Disponível no \Mídias</span><strong id="legendMidia">0</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Resumo por regional</h3>
+            <p>Quantidade de softwares cadastrados.</p>
+          </div>
+        </div>
+        <div class="regional-list" id="regionalList">
+          <div class="empty">Aguardando dados...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="panel-header table-toolbar">
+        <div>
+          <h3>Softwares cadastrados</h3>
+          <p id="tableSummary">0 registros</p>
+        </div>
+        <div class="filters">
+          <label>
+            <span class="sr-only">Pesquisar</span>
+            <input id="searchInput" type="search" placeholder="Pesquisar software..." autocomplete="off">
+          </label>
+          <label>
+            <span class="sr-only">Regional</span>
+            <select id="regionalFilter">
+              <option value="">Todas as regionais</option>
+            </select>
+          </label>
+          <label>
+            <span class="sr-only">Status</span>
+            <select id="statusFilter">
+              <option value="">Todos os status</option>
+              <option value="Em Consulta">Em Consulta</option>
+              <option value="Sem pacote oficial">Sem pacote oficial</option>
+              <option value="Disponível no \Mídias">Disponível no \Mídias</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Software</th>
+              <th>Regional</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="softwareTableBody">
+            <tr><td colspan="3" class="empty">Aguardando dados...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Projeto de acompanhamento • Instaladores MSI • SESI/SENAI SC</span>
+      <span id="recordInfo"></span>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
