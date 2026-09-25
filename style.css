@@ -87,3 +87,16 @@
 .media-table .col-media-obs{width:25%;}
 .media-table .link-cell{display:flex;align-items:center;gap:8px;min-width:0;}
 .media-table .copy-link{flex:0 0 auto;white-space:nowrap;padding:6px 9px;font-size:12px;}
+
+/* v29: links integrados ao dashboard; página de mídias removida */
+.software-table,.software-table .col-software,.software-table .col-status,.software-table .col-link{table-layout:fixed;}
+.software-table .col-software{width:42%;}
+.software-table .col-status{width:24%;}
+.software-table .col-link{width:34%;}
+.software-table .link-cell{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;}
+.software-table .link-text{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.software-table .copy-link{flex:0 0 auto;white-space:nowrap;padding:6px 9px;border:1px solid #1769c2;border-radius:7px;background:#1769c2;color:#fff;font-size:11px;font-weight:700;cursor:pointer;}
+.software-table .copy-link:hover{background:#0b4ea2;border-color:#0b4ea2;}
+.software-table .copy-link.copied{background:#2f7d32;border-color:#2f7d32;}
+@media(max-width:850px){.software-table .col-software{width:34%;}.software-table .col-status{width:28%;}.software-table .col-link{width:38%;}}
+@media(max-width:650px){.software-table .col-software{width:100%;}.software-table .col-status{width:100%;}.software-table .col-link{width:100%;}.software-table th,.software-table td{white-space:nowrap;}}

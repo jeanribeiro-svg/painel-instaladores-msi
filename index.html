@@ -6,15 +6,12 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="eyebrow">SESI • SENAI</span><h1>Painel de Instaladores MSI</h1><p>Controle dos softwares e da disponibilidade de pacotes para implantação em massa.</p></div>
+  <div class="brand"><span class="eyebrow">SESI • SENAI</span><h1>Painel de Instaladores MSI</h1><p>Controle dos softwares, status e locais dos pacotes para implantação em massa.</p></div>
   <div class="update-box"><div class="update-label">Dados da planilha</div><strong id="lastUpdate">Aguardando consulta...</strong><span id="connectionStatus" class="connection loading">Iniciando conexão...</span></div>
 </header>
-<nav class="nav"><div class="nav-inner">
-  <div class="nav-segment" aria-label="Navegação principal">
-    <button class="nav-btn active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
-    <button class="nav-btn" data-page="midias"><span class="nav-icon">↓</span><span>Mídias / Downloads</span></button>
-  </div>
-</div></nav>
+<nav class="nav"><div class="nav-inner"><div class="nav-segment" aria-label="Navegação principal">
+  <button class="nav-btn active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+</div></div></nav>
 <main class="container">
   <div id="errorBox" class="notice hidden"></div>
   <section id="page-dashboard" class="page">
@@ -22,27 +19,20 @@
       <article class="card"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
       <article class="card"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
       <article class="card"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
-      <article class="card highlight"><span>Disponível no \Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
+      <article class="card highlight"><span>Disponível no Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
       <article class="card highlight"><span>Disponível pelo Fabricante</span><strong id="fabricante">0</strong><small>pacote disponível no fabricante</small></article>
     </section>
     <section class="overview">
-      <div class="panel progress-panel"><div class="section-heading"><div><span class="section-kicker">Acompanhamento</span><h2>Progresso de disponibilidade</h2></div><strong id="progressPercent">0%</strong></div><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><p class="muted">Percentual do catálogo que já possui pacote disponível no \\Mídias.</p></div>
+      <div class="panel progress-panel"><div class="section-heading"><div><span class="section-kicker">Acompanhamento</span><h2>Progresso de disponibilidade</h2></div><strong id="progressPercent">0%</strong></div><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><p class="muted">Percentual do catálogo que já possui pacote disponível no Mídias.</p></div>
       <div class="panel chart-panel"><div class="section-heading"><div><span class="section-kicker">Visão geral</span><h2>Status dos softwares</h2></div></div><div class="donut-wrap"><div id="donut" class="donut"></div><div id="legend" class="legend"></div></div></div>
     </section>
     <section class="panel table-panel">
-      <div class="table-head"><div><span class="section-kicker">Catálogo</span><h2>Softwares cadastrados</h2><p class="muted" id="resultCount">0 registros</p></div><div class="actions"><button id="refreshButton" type="button">↻ Atualizar agora</button><button id="mediaButton" class="secondary" type="button">Ver mídias / downloads →</button></div></div>
+      <div class="table-head"><div><span class="section-kicker">Catálogo</span><h2>Softwares cadastrados</h2><p class="muted" id="resultCount">0 registros</p></div><div class="actions"><button id="refreshButton" type="button">↻ Atualizar agora</button></div></div>
       <div class="filters"><label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label><label>Status<select id="statusFilter"><option value="">Todos os status</option><option value="Disponível no Mídias">Disponível no Mídias</option><option value="Disponível pelo Fabricante">Disponível pelo Fabricante</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option></select></label></div>
-      <div class="table-wrap"><table class="software-table"><colgroup><col class="col-software"><col class="col-status"></colgroup><thead><tr><th>Software</th><th>Status</th></tr></thead><tbody id="softwareTable"><tr><td colspan="2" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
-    </section>
-  </section>
-  <section id="page-midias" class="page hidden-page">
-    <section class="panel table-panel">
-      <div class="table-head"><div><span class="section-kicker">Biblioteca</span><h2>Mídias / Downloads</h2><p class="muted" id="mediaResultCount">0 registros</p></div><div class="actions"><button id="mediaBackButton" class="secondary" type="button">← Dashboard</button><button id="mediaRefreshButton" type="button">↻ Atualizar agora</button></div></div>
-      <div class="filters"><label>Pesquisar software<input id="mediaSearch" type="search" placeholder="Digite o nome do software..."></label><label>Tipo<select id="mediaTypeFilter"><option value="">Todos os tipos</option></select></label></div>
-      <div class="table-wrap"><table class="media-table"><colgroup><col class="col-media-software"><col class="col-media-type"><col class="col-media-link"><col class="col-media-obs"></colgroup><thead><tr><th>Software</th><th>Tipo</th><th>Link / endereço</th><th>Observação</th></tr></thead><tbody id="mediaTable"><tr><td colspan="4" class="empty">Preparando consulta à aba Midias...</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="software-table"><colgroup><col class="col-software"><col class="col-status"><col class="col-link"></colgroup><thead><tr><th>Software</th><th>Status</th><th>Link / local de obtenção</th></tr></thead><tbody id="softwareTable"><tr><td colspan="3" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
     </section>
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script.js?v=20260925-28"></script>
+<script src="script.js?v=20260925-29"></script>
 </body></html>
