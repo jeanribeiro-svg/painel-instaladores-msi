@@ -13,3 +13,19 @@
 
 /* Ação Abrir */
 .open-link{border:0;cursor:pointer;font-family:inherit}
+/* v14: layout fixo e área de tabela estável */
+.page{min-height:760px}
+.table-wrap{min-height:390px;max-height:390px;overflow:auto}
+#page-dashboard .table-wrap{min-height:430px;max-height:430px}
+.card.highlight{border-top-color:#1769c2;background:#f8fbff}
+.status.available{background:#eaf3ff;color:#1769c2;border-color:#cfe0f5}
+
+/* v15: área de visualização estável independentemente dos filtros */
+.page{min-height:760px}
+.table-wrap{height:430px;overflow:auto}
+.table-wrap table{min-width:100%}
+.open-link{white-space:nowrap}
+.open-link.copied{background:#2f855a!important;border-color:#2f855a!important}
+.status.available{background:#eaf3ff;color:#1769c2;border-color:#cfe0f5}
+@media(max-width:850px){.page{min-height:900px}.table-wrap{height:430px}}
+@media(max-width:500px){.page{min-height:980px}.table-wrap{height:430px}}
