@@ -9,7 +9,12 @@
   <div class="brand"><span class="eyebrow">SESI • SENAI</span><h1>Painel de Instaladores MSI</h1><p>Controle dos softwares e da disponibilidade de pacotes para implantação em massa.</p></div>
   <div class="update-box"><div class="update-label">Dados da planilha</div><strong id="lastUpdate">Aguardando consulta...</strong><span id="connectionStatus" class="connection loading">Iniciando conexão...</span></div>
 </header>
-<nav class="nav"><div class="nav-inner"><button class="nav-btn active" data-page="dashboard">▦ Dashboard</button><button class="nav-btn" data-page="midias">↧ Mídias / Downloads</button></div></nav>
+<nav class="nav"><div class="nav-inner">
+  <div class="nav-segment" aria-label="Navegação principal">
+    <button class="nav-btn active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+    <button class="nav-btn" data-page="midias"><span class="nav-icon">↓</span><span>Mídias / Downloads</span></button>
+  </div>
+</div></nav>
 <main class="container">
   <div id="errorBox" class="notice hidden"></div>
   <section id="page-dashboard" class="page">
@@ -31,12 +36,12 @@
   </section>
   <section id="page-midias" class="page hidden-page">
     <section class="panel table-panel">
-      <div class="table-head"><div><span class="section-kicker">Biblioteca</span><h2>Mídias / Downloads</h2><p class="muted" id="mediaResultCount">0 registros</p></div><div class="actions"><button id="mediaRefreshButton" type="button">↻ Atualizar agora</button></div></div>
+      <div class="table-head"><div><span class="section-kicker">Biblioteca</span><h2>Mídias / Downloads</h2><p class="muted" id="mediaResultCount">0 registros</p></div><div class="actions"><button id="mediaBackButton" class="secondary" type="button">← Dashboard</button><button id="mediaRefreshButton" type="button">↻ Atualizar agora</button></div></div>
       <div class="filters"><label>Pesquisar software<input id="mediaSearch" type="search" placeholder="Digite o nome do software..."></label><label>Tipo<select id="mediaTypeFilter"><option value="">Todos os tipos</option></select></label></div>
       <div class="table-wrap"><table><thead><tr><th>Software</th><th>Tipo</th><th>Link</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="mediaTable"><tr><td colspan="5" class="empty">Preparando consulta à aba Midias...</td></tr></tbody></table></div>
     </section>
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script-v9.js?v=20260925-9"></script>
+<script src="script-v11.js?v=20260925-11"></script>
 </body></html>
