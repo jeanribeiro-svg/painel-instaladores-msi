@@ -17,7 +17,7 @@
  */
 
 const CONFIG = {
-  GOOGLE_SHEET_CSV_URL: "COLE_AQUI_A_URL_CSV_DA_GOOGLE_PLANILHA",
+  GOOGLE_SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/1-ZQQLvMGEDSwDRiigtNo2vvCZhoS3OUdgK0423gW-Jg/edit?usp=sharing",
   REFRESH_INTERVAL_MS: 30000
 };
 
