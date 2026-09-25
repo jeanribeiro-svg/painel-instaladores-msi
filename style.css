@@ -49,3 +49,12 @@
 .open-link.copied{background:#2f855a!important;border-color:#2f855a!important;}
 .table-wrap{height:430px;min-height:430px;max-height:430px;}
 #page-dashboard .table-wrap{height:430px;min-height:430px;max-height:430px;}
+
+/* v17 corrections */
+.table-wrap{overflow-x:auto;overflow-y:scroll;}
+#page-dashboard .table-wrap{overflow-x:auto;overflow-y:scroll;}
+.card.highlight{background:#eaf3ff !important;border:1px solid #1769c2 !important;border-top:3px solid #1769c2 !important;}
+.card.highlight span,.card.highlight strong,.card.highlight small{color:#1769c2 !important;}
+.status.available{background:#1769c2 !important;color:#fff !important;border-color:#1769c2 !important;}
+.software-table th,.software-table td{white-space:nowrap;}
+.media-table th,.media-table td{white-space:nowrap;}
