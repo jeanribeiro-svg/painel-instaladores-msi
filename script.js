@@ -11,7 +11,8 @@ const CONFIG = {
 const STATUS = {
   CONSULTA: "Em Consulta",
   SEM_PACOTE: "Sem pacote oficial",
-  DISPONIVEL: "Disponível no \\Mídias"
+  DISPONIVEL: "Disponível no \\Mídias",
+  FABRICANTE: "Disponível pelo Fabricante"
 };
 
 let allRows = [], mediaRows = [], hasLoadedData = false, mediaLoaded = false;
@@ -23,6 +24,7 @@ function canonicalStatus(value) {
   if (key === normalizeStatus(STATUS.CONSULTA)) return STATUS.CONSULTA;
   if (key === normalizeStatus(STATUS.SEM_PACOTE)) return STATUS.SEM_PACOTE;
   if (key === normalizeStatus(STATUS.DISPONIVEL)) return STATUS.DISPONIVEL;
+  if (key === normalizeStatus(STATUS.FABRICANTE)) return STATUS.FABRICANTE;
   return raw;
 }
 function isHeaderRow(a,b) { return normalize(a).toLowerCase()==="software" && normalize(b).toLowerCase()==="status"; }
