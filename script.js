@@ -14,38 +14,32 @@ const STATUS = {
 
 let allRows = [];
 let hasLoadedData = false;
-let loading = false;
+let lastSource = "";
 
 function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").trim(); }
 
-function setLastUpdate(text, state = "") {
-  const el = $("lastUpdate");
+function setConnection(text, type = "neutral") {
+  const el = $("connectionStatus");
   if (!el) return;
   el.textContent = text;
-  el.className = state;
+  el.className = `connection ${type}`;
+}
+
+function setLastUpdate(text) {
+  if ($("lastUpdate")) $("lastUpdate").textContent = text;
 }
 
 function showError(message, type = "error") {
   const box = $("errorBox");
   if (!box) return;
+  box.className = `notice ${type}`;
   box.textContent = message;
-  box.className = `error-box ${type}`;
 }
 
 function hideError() {
   const box = $("errorBox");
-  if (box) box.className = "error-box hidden";
-}
-
-function setLoading(isLoading) {
-  loading = isLoading;
-  const btn = $("retryButton");
-  if (btn) {
-    btn.disabled = isLoading;
-    btn.textContent = isLoading ? "Atualizando..." : "Atualizar agora";
-  }
-  document.body.classList.toggle("is-loading", isLoading);
+  if (box) box.className = "notice hidden";
 }
 
 function parseCSV(text) {
@@ -61,13 +55,13 @@ function parseCSV(text) {
     } else if ((c === '\n' || c === '\r') && !quoted) {
       if (c === '\r' && next === '\n') i++;
       row.push(cell); cell = "";
-      if (row.some(v => normalize(v) !== "")) rows.push(row);
+      if (row.some(v => normalize(v))) rows.push(row);
       row = [];
     } else cell += c;
   }
   if (cell.length || row.length) {
     row.push(cell);
-    if (row.some(v => normalize(v) !== "")) rows.push(row);
+    if (row.some(v => normalize(v))) rows.push(row);
   }
   return rows;
 }
@@ -77,10 +71,22 @@ function parseSheetData(text) {
   if (!parsed.length) return { rows: [], empty: true };
 
   const headers = parsed[0].map(normalize);
-  const softwareIndex = headers.findIndex(h => h.toLowerCase() === "software");
-  const statusIndex = headers.findIndex(h => h.toLowerCase() === "status");
+  const lowerHeaders = headers.map(h => h.toLowerCase());
+  let softwareIndex = lowerHeaders.findIndex(h => h === "software");
+  let statusIndex = lowerHeaders.findIndex(h => h === "status");
+
+  // Alguns retornos do Google podem trazer A/B como identificadores em vez
+  // dos nomes dos cabeçalhos. Nesse caso, a estrutura da planilha continua
+  // sendo a esperada: coluna A = Software e coluna B = Status.
+  if (softwareIndex < 0 && statusIndex < 0 && lowerHeaders.length >= 2 &&
+      (lowerHeaders[0] === "a" || lowerHeaders[0] === "a1") &&
+      (lowerHeaders[1] === "b" || lowerHeaders[1] === "b1")) {
+    softwareIndex = 0;
+    statusIndex = 1;
+  }
+
   if (softwareIndex < 0 || statusIndex < 0) {
-    throw new Error(`Cabeçalhos inválidos. Encontrados: ${headers.join(" | ")}`);
+    throw new Error(`Cabeçalhos encontrados: ${headers.join(" | ")}`);
   }
 
   const rows = parsed.slice(1).map(r => ({
@@ -95,101 +101,123 @@ async function fetchCsv() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
   try {
-    const url = CONFIG.GOOGLE_SHEET_CSV_URL + `&_=${Date.now()}`;
-    const response = await fetch(url, { cache: "no-store", mode: "cors", signal: controller.signal });
+    const sep = CONFIG.GOOGLE_SHEET_CSV_URL.includes("?") ? "&" : "?";
+    const response = await fetch(CONFIG.GOOGLE_SHEET_CSV_URL + sep + "cache=" + Date.now(), {
+      cache: "no-store", mode: "cors", signal: controller.signal
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
-    if (!text.trim()) return { rows: [], empty: true, method: "CSV" };
-    return { ...parseSheetData(text), method: "CSV" };
-  } finally {
-    clearTimeout(timer);
-  }
+    return parseSheetData(await response.text());
+  } finally { clearTimeout(timer); }
 }
 
-function fetchGvizJsonp() {
+// Fallback sem fetch/CORS: o navegador carrega a resposta do Google como script JSONP.
+function fetchGoogleJsonp() {
   return new Promise((resolve, reject) => {
-    const callbackName = `__sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const callback = `googleSheetCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const script = document.createElement("script");
-    let finished = false;
-    const timeout = setTimeout(() => finish(new Error("tempo limite do Google Sheets excedido")), CONFIG.REQUEST_TIMEOUT_MS);
+    const timer = setTimeout(() => cleanup(new Error("Tempo limite do Google Sheets excedido.")), CONFIG.REQUEST_TIMEOUT_MS);
 
-    function cleanup() {
-      clearTimeout(timeout);
-      delete window[callbackName];
+    function cleanup(error, data) {
+      clearTimeout(timer);
+      delete window[callback];
       script.remove();
-    }
-    function finish(error, data) {
-      if (finished) return;
-      finished = true;
-      cleanup();
       error ? reject(error) : resolve(data);
     }
 
-    window[callbackName] = payload => {
+    window[callback] = payload => {
       try {
-        const table = payload?.table;
-        if (!table?.cols) throw new Error("Resposta do Google Sheets sem estrutura de tabela.");
-        const headers = table.cols.map(c => normalize(c.label || c.id));
-        const softwareIndex = headers.findIndex(h => h.toLowerCase() === "software");
-        const statusIndex = headers.findIndex(h => h.toLowerCase() === "status");
-        if (softwareIndex < 0 || statusIndex < 0) throw new Error(`Colunas encontradas: ${headers.join(" | ")}`);
-        const rows = (table.rows || []).map(r => ({
-          software: normalize(r.c?.[softwareIndex]?.v),
-          status: normalize(r.c?.[statusIndex]?.v)
-        })).filter(r => r.software);
-        finish(null, { rows, empty: rows.length === 0, method: "Google Visualization" });
-      } catch (e) { finish(e); }
+        const table = payload && payload.table;
+        if (!table) throw new Error("Resposta do Google Sheets sem dados de tabela.");
+
+        const cols = Array.isArray(table.cols) ? table.cols : [];
+        const rows = Array.isArray(table.rows) ? table.rows : [];
+
+        // O Google Visualization pode retornar label vazio e id "A", "B"...
+        // ou, dependendo da consulta, apenas os identificadores das colunas.
+        // Como a planilha deste painel possui A=Software e B=Status, usamos
+        // os nomes quando disponíveis e, como fallback seguro, as posições A/B.
+        const labels = cols.map(c => normalize(c?.label));
+        const ids = cols.map(c => normalize(c?.id).toLowerCase());
+
+        let softwareIndex = labels.findIndex(h => h.toLowerCase() === "software");
+        let statusIndex = labels.findIndex(h => h.toLowerCase() === "status");
+
+        if (softwareIndex < 0) softwareIndex = ids.findIndex(h => h === "a");
+        if (statusIndex < 0) statusIndex = ids.findIndex(h => h === "b");
+
+        // Último fallback: a consulta foi limitada a A:B, portanto as duas
+        // primeiras posições são necessariamente Software e Status.
+        if (softwareIndex < 0 && cols.length >= 2) softwareIndex = 0;
+        if (statusIndex < 0 && cols.length >= 2) statusIndex = 1;
+
+        if (softwareIndex < 0 || statusIndex < 0) {
+          const encontrados = cols.map((c, i) => normalize(c?.label) || normalize(c?.id) || String.fromCharCode(65 + i));
+          return cleanup(new Error(`Colunas encontradas: ${encontrados.join(" | ")}`));
+        }
+
+        const data = rows.map(row => {
+          const cells = Array.isArray(row?.c) ? row.c : [];
+          return {
+            software: normalize(cells[softwareIndex]?.v ?? cells[softwareIndex]?.f),
+            status: normalize(cells[statusIndex]?.v ?? cells[statusIndex]?.f)
+          };
+        }).filter(r => r.software);
+
+        cleanup(null, { rows: data, empty: data.length === 0 });
+      } catch (e) {
+        cleanup(e);
+      }
     };
 
-    const params = `gid=${encodeURIComponent(CONFIG.GOOGLE_SHEET_GID)}&tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&_=${Date.now()}`;
-    script.src = `https://docs.google.com/spreadsheets/d/${CONFIG.GOOGLE_SHEET_ID}/gviz/tq?${params}`;
-    script.onerror = () => finish(new Error("Google Sheets bloqueou ou não disponibilizou a consulta JSONP."));
+    script.onerror = () => cleanup(new Error("O Google Sheets recusou a consulta alternativa."));
+
+    const query = encodeURIComponent("select A, B");
+    const tqx = encodeURIComponent(`out:json;responseHandler:${callback}`);
+    script.src = `https://docs.google.com/spreadsheets/d/${CONFIG.GOOGLE_SHEET_ID}/gviz/tq?gid=${encodeURIComponent(CONFIG.GOOGLE_SHEET_GID)}&tqx=${tqx}&tq=${query}`;
     document.head.appendChild(script);
   });
 }
 
 async function loadData() {
-  if (loading) return;
-  setLoading(true);
-  setLastUpdate("Atualizando...", "loading");
+  setConnection("Consultando planilha...", "loading");
+  setLastUpdate("Atualizando...");
 
+  let result;
+  let source;
   try {
-    let result;
-    let firstError = null;
     try {
       result = await fetchCsv();
-    } catch (e) {
-      firstError = e;
-      result = await fetchGvizJsonp();
+      source = "CSV publicado";
+    } catch (csvError) {
+      console.warn("CSV não carregou; tentando Google Sheets JSONP.", csvError);
+      result = await fetchGoogleJsonp();
+      source = "Google Sheets";
     }
 
     allRows = result.rows;
     hasLoadedData = true;
+    lastSource = source;
     updateDashboard();
-    setLastUpdate(new Date().toLocaleString("pt-BR"), "ok");
+    setLastUpdate(new Date().toLocaleString("pt-BR"));
+    setConnection(`Conectado • ${source}`, "ok");
 
     if (result.empty) {
-      showError("A planilha está acessível, mas não possui softwares cadastrados no momento.", "warning");
+      showError("A planilha foi acessada, mas ainda não há softwares cadastrados.", "warning");
     } else {
       hideError();
     }
-
-    const source = $("sourceStatus");
-    if (source) source.textContent = `Fonte: Google Sheets • ${result.method}`;
   } catch (error) {
-    console.error("Erro ao carregar a planilha:", error);
+    console.error("Falha ao carregar dados:", error);
+    setConnection("Sem conexão com a planilha", "error");
+    setLastUpdate("Não atualizada");
     updateDashboard();
-    setLastUpdate("Não atualizada", "error");
-    const detail = error?.name === "AbortError" ? "tempo limite excedido" : (error?.message || "erro desconhecido");
 
     if (hasLoadedData) {
-      showError(`Falha na atualização. Os dados anteriores continuam sendo exibidos. Detalhe: ${detail}`, "warning");
+      showError("Não foi possível atualizar os dados agora. Os dados anteriores continuam sendo exibidos.", "warning");
     } else {
-      showError(`Não foi possível carregar os dados da planilha. O painel continuará tentando automaticamente. Detalhe: ${detail}`, "error");
-      renderEmptyState("Não foi possível carregar os dados. Verifique a publicação da planilha e tente novamente.");
+      showError("Não foi possível obter os dados da planilha. Verifique se a publicação do Google Sheets está ativa e tente novamente.", "error");
+      renderEmptyState("Não foi possível carregar os dados.");
     }
-  } finally {
-    setLoading(false);
   }
 }
 
@@ -216,24 +244,17 @@ function updateDashboard() {
 
   const a = total ? consulta / total * 360 : 0;
   const b = total ? semPacote / total * 360 : 0;
-  const donut = $("donut");
-  donut.style.background = total
-    ? `conic-gradient(#e3a72f 0deg ${a}deg, #d15b5b ${a}deg ${a + b}deg, #1769c2 ${a + b}deg 360deg)`
-    : `conic-gradient(#e8edf4 0deg 360deg)`;
-
+  $("donut").style.background = `conic-gradient(#d99a20 0deg ${a}deg, #d15b5b ${a}deg ${a + b}deg, #1769c2 ${a + b}deg 360deg)`;
   $("legend").innerHTML = `
-    <div class="legend-item"><span class="dot consulta-dot"></span><span>Em Consulta</span><strong>${consulta}</strong></div>
-    <div class="legend-item"><span class="dot none-dot"></span><span>Sem pacote oficial</span><strong>${semPacote}</strong></div>
-    <div class="legend-item"><span class="dot available-dot"></span><span>Disponível no \\Mídias</span><strong>${disponivel}</strong></div>`;
-
+    <div><span class="dot consulta-dot"></span>Em Consulta <b>${consulta}</b></div>
+    <div><span class="dot none-dot"></span>Sem pacote oficial <b>${semPacote}</b></div>
+    <div><span class="dot available-dot"></span>Disponível no \\Mídias <b>${disponivel}</b></div>`;
   renderTable();
 }
 
 function renderEmptyState(message) {
-  const tbody = $("softwareTable");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="2" class="empty"><div class="empty-title">${escapeHtml(message)}</div><button id="emptyRetry" class="secondary-button">Tentar novamente</button></td></tr>`;
-  if ($("resultCount")) $("resultCount").textContent = "0 registros";
-  setTimeout(() => { $("emptyRetry")?.addEventListener("click", loadData); }, 0);
+  $("softwareTable").innerHTML = `<tr><td colspan="2" class="empty">${escapeHtml(message)}</td></tr>`;
+  $("resultCount").textContent = "0 registros";
 }
 
 function renderTable() {
@@ -241,12 +262,11 @@ function renderTable() {
   const filter = normalize($("statusFilter")?.value);
   const rows = allRows.filter(r => (!search || r.software.toLowerCase().includes(search)) && (!filter || r.status === filter));
   $("resultCount").textContent = `${rows.length} registro${rows.length === 1 ? "" : "s"}`;
-  const tbody = $("softwareTable");
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="2" class="empty">${allRows.length ? "Nenhum software encontrado para os filtros atuais." : "Nenhum software cadastrado."}</td></tr>`;
+    $("softwareTable").innerHTML = `<tr><td colspan="2" class="empty">${allRows.length ? "Nenhum software encontrado para os filtros atuais." : "Nenhum software cadastrado."}</td></tr>`;
     return;
   }
-  tbody.innerHTML = rows.map(r => `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status || "Sem status")}</span></td></tr>`).join("");
+  $("softwareTable").innerHTML = rows.map(r => `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status || "Sem status")}</span></td></tr>`).join("");
 }
 
 function escapeHtml(value) {
@@ -254,12 +274,13 @@ function escapeHtml(value) {
 }
 
 function initDashboard() {
-  $("search")?.addEventListener("input", renderTable);
-  $("statusFilter")?.addEventListener("change", renderTable);
-  $("retryButton")?.addEventListener("click", loadData);
+  $("search").addEventListener("input", renderTable);
+  $("statusFilter").addEventListener("change", renderTable);
+  $("refreshButton").addEventListener("click", loadData);
   updateDashboard();
   loadData();
   setInterval(loadData, CONFIG.REFRESH_INTERVAL_MS);
 }
 
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initDashboard) : initDashboard();
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initDashboard);
+else initDashboard();
