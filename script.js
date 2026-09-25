@@ -87,12 +87,21 @@ function fetchGoogleJsonp() {
 
 async function loadData(){
   setConnection("Consultando planilha...","loading");setLastUpdate("Atualizando...");
-  try{let result;
-    try{result=parseSheetData(await fetchCsv(CONFIG.GOOGLE_SHEET_CSV_URL));}
-    catch(csvError){console.warn("CSV não carregou; tentando Google Sheets JSONP.",csvError);result=await fetchGoogleJsonp();}
-    allRows=result.rows.map(r=>({software:normalize(r.software),status:canonicalStatus(r.status)})).filter(r=>r.software&&!isHeaderRow(r.software,r.status));
+  try{
+    const results=await Promise.allSettled([
+      fetchCsv(CONFIG.GOOGLE_SHEET_CSV_URL).then(parseSheetData),
+      fetchGoogleJsonp()
+    ]);
+    const valid=results.filter(r=>r.status==="fulfilled"&&r.value&&Array.isArray(r.value.rows));
+    if(!valid.length)throw new Error("Nenhuma fonte do Google Sheets retornou dados.");
+    // Usa a resposta que contém mais registros. Isso evita perder linhas quando a
+    // publicação CSV estiver defasada/incompleta em relação à consulta GViz.
+    const result=valid.reduce((best,current)=>current.value.rows.length>best.value.rows.length?current:best);
+    allRows=result.value.rows.map(r=>({software:normalize(r.software),status:canonicalStatus(r.status)}))
+      .filter(r=>r.software&&!isHeaderRow(r.software,r.status));
     hasLoadedData=true;updateDashboard();setLastUpdate(new Date().toLocaleString("pt-BR"));setConnection("Conectado","ok");
-    if(result.empty)showError("A planilha foi acessada, mas ainda não há softwares cadastrados.","warning");else hideError();
+    if(result.value.empty)showError("A planilha foi acessada, mas ainda não há softwares cadastrados.","warning");else hideError();
+    if(valid.length>1&&valid.some(r=>r.value.rows.length!==result.value.rows.length))console.info("Google Sheets: foi utilizada a fonte com maior quantidade de registros.");
   }catch(error){console.error("Falha ao carregar dados:",error);setConnection("Sem conexão com a planilha","error");setLastUpdate("Não atualizada");updateDashboard();if(hasLoadedData)showError("Não foi possível atualizar os dados agora. Os dados anteriores continuam sendo exibidos.","warning");else{showError("Não foi possível obter os dados da planilha. Verifique se a publicação do Google Sheets está ativa e tente novamente.","error");renderEmptyState("Não foi possível carregar os dados.");}}
 }
 
