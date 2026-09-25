@@ -67,3 +67,12 @@
 #statusFilter option:checked{background:#1769c2;color:#fff;}
 
 .media-actions{display:flex;gap:6px;align-items:center;white-space:nowrap}.browser-link{background:#fff!important;color:#1769c2!important;border:1px solid #1769c2!important}.browser-link:hover{background:#f1f6fb!important}
+
+/* v23: mídia compacta com botão de cópia no próprio campo de endereço */
+.media-table .col-media-software{width:22%;}
+.media-table .col-media-type{width:13%;}
+.media-table .col-media-link{width:40%;}
+.media-table .col-media-obs{width:25%;}
+.media-table .link-cell{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:clip;}
+.media-table .media-link-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.media-table .copy-link{flex:0 0 auto;}

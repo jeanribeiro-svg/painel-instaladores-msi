@@ -47,12 +47,14 @@ function parseCSV(text) {
 function parseSheetData(text) {
   const parsed=parseCSV(text.replace(/^\uFEFF/,""));
   if(!parsed.length)return{rows:[],empty:true};
-  const headers=parsed[0].map(normalize), lower=headers.map(h=>h.toLowerCase());
+  const first=parsed[0].map(normalize), lower=first.map(h=>h.toLowerCase());
+  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status");
   let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status");
-  if(softwareIndex<0&&statusIndex<0&&parsed[0].length>=2){softwareIndex=0;statusIndex=1;}
-  else {if(softwareIndex<0&&lower[0]==="a")softwareIndex=0;if(statusIndex<0&&lower[1]==="b")statusIndex=1;}
-  if(softwareIndex<0||statusIndex<0)throw new Error(`Não foi possível identificar Software e Status. Cabeçalhos: ${headers.join(" | ")}`);
-  const rows=parsed.slice(1).map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex])})).filter(r=>r.software&&!isHeaderRow(r.software,r.status));
+  if(softwareIndex<0)softwareIndex=0;
+  if(statusIndex<0)statusIndex=1;
+  const dataRows=hasHeader?parsed.slice(1):parsed;
+  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex])}))
+    .filter(r=>r.software&&!isHeaderRow(r.software,r.status));
   return{rows,empty:rows.length===0};
 }
 
@@ -96,9 +98,18 @@ async function loadData(){
     if(!valid.length)throw new Error("Nenhuma fonte do Google Sheets retornou dados.");
     // Usa a resposta que contém mais registros. Isso evita perder linhas quando a
     // publicação CSV estiver defasada/incompleta em relação à consulta GViz.
-    const result=valid.reduce((best,current)=>current.value.rows.length>best.value.rows.length?current:best);
-    allRows=result.value.rows.map(r=>({software:normalize(r.software),status:canonicalStatus(r.status)}))
-      .filter(r=>r.software&&!isHeaderRow(r.software,r.status));
+    // Une as duas fontes por software, em vez de descartar uma delas. Assim,
+    // uma publicação parcial do CSV não faz linhas desaparecerem.
+    const merged=new Map();
+    valid.forEach(source=>source.value.rows.forEach(r=>{
+      const software=normalize(r.software), key=software.toLocaleLowerCase("pt-BR");
+      if(!software)return;
+      const status=canonicalStatus(r.status);
+      if(!merged.has(key)) merged.set(key,{software,status});
+      else if(!merged.get(key).status && status) merged.get(key).status=status;
+      else if(merged.get(key).status!==STATUS.DISPONIVEL && status===STATUS.DISPONIVEL) merged.get(key).status=status;
+    }));
+    allRows=[...merged.values()].filter(r=>r.software&&!isHeaderRow(r.software,r.status));
     hasLoadedData=true;updateDashboard();setLastUpdate(new Date().toLocaleString("pt-BR"));setConnection("Conectado","ok");
     if(result.value.empty)showError("A planilha foi acessada, mas ainda não há softwares cadastrados.","warning");else hideError();
     if(valid.length>1&&valid.some(r=>r.value.rows.length!==result.value.rows.length))console.info("Google Sheets: foi utilizada a fonte com maior quantidade de registros.");
@@ -120,7 +131,7 @@ function copyAddress(link,button){const x=String(link??"").replace(/^\uFEFF/,"")
 function fallbackCopy(x,button){const ta=document.createElement("textarea");ta.value=x;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();try{if(!document.execCommand("copy"))throw new Error("copy failed");copiedFeedback(button);}catch(e){alert("Não foi possível copiar o endereço.\n\n"+x);}finally{ta.remove();}}
 function copiedFeedback(button){if(!button)return;const original=button.textContent;button.textContent="✓ Copiado!";button.classList.add("copied");setTimeout(()=>{button.textContent=original;button.classList.remove("copied");},1600);}
 function openAddressInBrowser(link){const x=String(link??"").replace(/^\uFEFF/,"").replace(/\u00A0/g," ").trim();if(!x)return;window.open(x,"_blank","noopener,noreferrer");}
-function renderMedia(){const search=normalize($("mediaSearch")?.value).toLowerCase(),filter=normalize($("mediaTypeFilter")?.value),rows=mediaRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||r.tipo===filter));$("mediaResultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;$("mediaTable").innerHTML=rows.length?rows.map(r=>{const link=r.link||"—",i=mediaRows.indexOf(r);return`<tr><td>${escapeHtml(r.software)}</td><td>${escapeHtml(r.tipo||"—")}</td><td class="link-cell" title="${escapeHtml(link)}">${escapeHtml(link)}</td><td>${escapeHtml(r.observacao||"—")}</td><td>${r.link?`<div class="media-actions"><button type="button" class="open-link copy-link" data-media-index="${i}">Copiar endereço</button><button type="button" class="open-browser browser-link" data-media-index="${i}">Abrir</button></div>`:"—"}</td></tr>`;}).join(""):`<tr><td colspan="5" class="empty">${mediaRows.length?"Nenhuma mídia encontrada para os filtros atuais.":"Nenhuma mídia cadastrada."}</td></tr>`;}
+function renderMedia(){const search=normalize($("mediaSearch")?.value).toLowerCase(),filter=normalize($("mediaTypeFilter")?.value),rows=mediaRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||r.tipo===filter));$("mediaResultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;$("mediaTable").innerHTML=rows.length?rows.map(r=>{const link=r.link||"—",i=mediaRows.indexOf(r);return`<tr><td>${escapeHtml(r.software)}</td><td>${escapeHtml(r.tipo||"—")}</td><td class="link-cell" title="${escapeHtml(link)}"><span class="media-link-text">${escapeHtml(link)}</span>${r.link?`<button type="button" class="open-link copy-link" data-media-index="${i}">Copiar endereço</button>`:""}</td><td>${escapeHtml(r.observacao||"—")}</td></tr>`;}).join(""):`<tr><td colspan="4" class="empty">${mediaRows.length?"Nenhuma mídia encontrada para os filtros atuais.":"Nenhuma mídia cadastrada."}</td></tr>`;}
 function renderMediaError(message){$("mediaTable").innerHTML=`<tr><td colspan="5" class="empty">${escapeHtml(message)}</td></tr>`;$("mediaResultCount").textContent="0 registros";}
 function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 
