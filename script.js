@@ -13,7 +13,7 @@ const STATUS = {
   FABRICANTE: "Disponível pelo Fabricante"
 };
 
-let allRows = [], hasLoadedData = false;
+let allRows = [], hasLoadedData = false, activeFilter = "";
 function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").replace(/^\uFEFF/, "").replace(/\u00A0/g, " ").trim(); }
 function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase(); }
@@ -122,7 +122,7 @@ function renderEmptyState(message){
 }
 
 function renderTable(){
-  const search=normalize($("search")?.value).toLowerCase(),filter=canonicalStatus($("statusFilter")?.value);
+  const search=normalize($("search")?.value).toLowerCase(),filter=canonicalStatus(activeFilter);
   const rows=allRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||r.status===filter));
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
@@ -132,14 +132,18 @@ function renderTable(){
   }).join(""):`<tr><td colspan="3" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
-function updateStatusFilterStyle(){
-  const sel=$("statusFilter");if(!sel)return;
-  sel.classList.remove("status-filter-consulta","status-filter-none","status-filter-available","status-filter-fabricante");
-  const v=canonicalStatus(sel.value);
-  if(v===STATUS.CONSULTA)sel.classList.add("status-filter-consulta");
-  else if(v===STATUS.SEM_PACOTE)sel.classList.add("status-filter-none");
-  else if(v===STATUS.DISPONIVEL)sel.classList.add("status-filter-available");
-  else if(v===STATUS.FABRICANTE)sel.classList.add("status-filter-fabricante");
+function updateFilterCards(){
+  document.querySelectorAll(".filter-card").forEach(card=>{
+    const active=canonicalStatus(card.dataset.filter||"")===canonicalStatus(activeFilter);
+    card.classList.toggle("active-filter",!!activeFilter&&active);
+    card.setAttribute("aria-pressed",activeFilter&&active?"true":"false");
+  });
+}
+
+function setActiveFilter(filter){
+  activeFilter=canonicalStatus(filter||"");
+  updateFilterCards();
+  renderTable();
 }
 
 function copyAddress(link,button){
@@ -164,9 +168,15 @@ document.addEventListener("click",e=>{
 
 function init(){
   $("search").addEventListener("input",renderTable);
-  $("statusFilter").addEventListener("change",()=>{updateStatusFilterStyle();renderTable();});
   $("refreshButton").addEventListener("click",loadData);
-  updateStatusFilterStyle();
+  document.querySelectorAll(".filter-card").forEach(card=>{
+    const activate=()=>setActiveFilter(card.dataset.filter||"");
+    card.addEventListener("click",activate);
+    card.addEventListener("keydown",e=>{
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();activate();}
+    });
+  });
+  updateFilterCards();
   loadData();
   setInterval(loadData,CONFIG.REFRESH_INTERVAL_MS);
 }

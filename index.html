@@ -15,12 +15,12 @@
 <main class="container">
   <div id="errorBox" class="notice hidden"></div>
   <section id="page-dashboard" class="page">
-    <section class="cards">
-      <article class="card"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
-      <article class="card"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
-      <article class="card"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
-      <article class="card highlight"><span>Disponível no Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
-      <article class="card highlight"><span>Disponível pelo Fabricante</span><strong id="fabricante">0</strong><small>pacote disponível no fabricante</small></article>
+    <section class="cards" aria-label="Filtros rápidos do catálogo">
+      <article class="card filter-card" data-filter="" tabindex="0" role="button" aria-pressed="false"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
+      <article class="card filter-card" data-filter="Em Consulta" tabindex="0" role="button" aria-pressed="false"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
+      <article class="card filter-card" data-filter="Sem pacote oficial" tabindex="0" role="button" aria-pressed="false"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
+      <article class="card filter-card" data-filter="Disponível no Mídias" tabindex="0" role="button" aria-pressed="false"><span>Disponível no Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
+      <article class="card filter-card" data-filter="Disponível pelo Fabricante" tabindex="0" role="button" aria-pressed="false"><span>Disponível pelo Fabricante</span><strong id="fabricante">0</strong><small>pacote disponível no fabricante</small></article>
     </section>
     <section class="overview">
       <div class="panel progress-panel"><div class="section-heading"><div><span class="section-kicker">Acompanhamento</span><h2>Progresso de disponibilidade</h2></div><strong id="progressPercent">0%</strong></div><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><p class="muted">Percentual do catálogo que já possui pacote disponível no Mídias.</p></div>
@@ -28,11 +28,11 @@
     </section>
     <section class="panel table-panel">
       <div class="table-head"><div><span class="section-kicker">Catálogo</span><h2>Softwares cadastrados</h2><p class="muted" id="resultCount">0 registros</p></div><div class="actions"><button id="refreshButton" type="button">↻ Atualizar agora</button></div></div>
-      <div class="filters"><label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label><label>Status<select id="statusFilter"><option value="">Todos os status</option><option value="Disponível no Mídias">Disponível no Mídias</option><option value="Disponível pelo Fabricante">Disponível pelo Fabricante</option><option value="Em Consulta">Em Consulta</option><option value="Sem pacote oficial">Sem pacote oficial</option></select></label></div>
+      <div class="filters"><label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label></div>
       <div class="table-wrap"><table class="software-table"><colgroup><col class="col-software"><col class="col-status"><col class="col-link"></colgroup><thead><tr><th>Software</th><th>Status</th><th>Link / local de obtenção</th></tr></thead><tbody id="softwareTable"><tr><td colspan="3" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
     </section>
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script.js?v=20260925-29"></script>
+<script src="script.js?v=20260925-30"></script>
 </body></html>

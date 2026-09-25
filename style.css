@@ -100,3 +100,16 @@
 .software-table .copy-link.copied{background:#2f7d32;border-color:#2f7d32;}
 @media(max-width:850px){.software-table .col-software{width:34%;}.software-table .col-status{width:28%;}.software-table .col-link{width:38%;}}
 @media(max-width:650px){.software-table .col-software{width:100%;}.software-table .col-status{width:100%;}.software-table .col-link{width:100%;}.software-table th,.software-table td{white-space:nowrap;}}
+
+/* v30: cards de resumo como filtros rápidos */
+.cards{grid-template-columns:repeat(5,1fr);}
+.filter-card{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease;user-select:none;}
+.filter-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(24,34,48,.09);border-color:#b9cee6;}
+.filter-card:focus-visible{outline:3px solid rgba(23,105,194,.22);outline-offset:2px;}
+.filter-card.active-filter{border-color:#1769c2;background:#eaf3ff;box-shadow:0 4px 14px rgba(23,105,194,.12);}
+.filter-card.active-filter span,.filter-card.active-filter strong,.filter-card.active-filter small{color:#1769c2;}
+.filter-card.active-filter strong{font-weight:800;}
+.filters{grid-template-columns:1fr;}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.cards{grid-template-columns:1fr;}}
