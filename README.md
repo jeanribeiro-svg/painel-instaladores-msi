@@ -1,37 +1,28 @@
-# Painel de Instaladores MSI
+# Painel de Instaladores MSI — versão robusta
 
-Dashboard estático para GitHub Pages, alimentado pela aba `Softwares` do Google Sheets.
-
-## Fonte de dados configurada
+## Fonte CSV
 
 https://docs.google.com/spreadsheets/d/e/2PACX-1vTkjRpZsinwht385Qhwt5-vK-Lvmf5QN88ttP07XzvX6tvNOrLwkr8NaSTHpFGfo1NiwuoR0oUP22I_/pub?gid=474438347&single=true&output=csv
 
-## Estrutura esperada
+## Comportamento em caso de falha
 
-A primeira linha da aba publicada deve conter exatamente:
+O painel foi preparado para **não ficar em branco**:
 
-- `Software`
-- `Status`
+- Se a planilha estiver vazia, os indicadores aparecem como `0` e a tabela informa que não há softwares cadastrados.
+- Se a planilha estiver temporariamente indisponível antes do primeiro carregamento, o painel mostra uma mensagem e continua tentando.
+- Se uma atualização posterior falhar, os dados anteriormente carregados são mantidos na tela.
+- Existe timeout de 10 segundos para evitar carregamento indefinido.
+- Erros de HTTP, CSV vazio e cabeçalhos incorretos são apresentados na própria página.
+- A atualização automática continua a cada 30 segundos.
 
-Os status esperados são:
+## Estrutura da planilha
+
+A aba publicada deve possuir os cabeçalhos:
+
+`Software` | `Status`
+
+Status esperados:
 
 - `Em Consulta`
 - `Sem pacote oficial`
 - `Disponível no \\Mídias`
-
-## Atualização
-
-O painel consulta a planilha automaticamente a cada 30 segundos e usa um parâmetro de timestamp para evitar cache do navegador.
-
-## Publicação no GitHub Pages
-
-1. Extraia os arquivos.
-2. Coloque `index.html`, `style.css`, `script.js` e `README.md` no repositório.
-3. Em **Settings → Pages**, selecione a branch/pasta usada pelo projeto.
-4. Acesse a URL fornecida pelo GitHub Pages.
-
-## Se a página ficar sem dados
-
-Abra o console do navegador (F12 → Console). O painel também apresenta uma mensagem de erro na própria página.
-
-A URL configurada é uma publicação CSV do Google Sheets, portanto a planilha precisa continuar publicada na web e a aba `Softwares` precisa manter os cabeçalhos `Software` e `Status`.
