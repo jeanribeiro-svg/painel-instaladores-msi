@@ -29,3 +29,7 @@ Status esperados:
 ## Publicação no GitHub Pages
 
 Extraia os arquivos e publique a pasta no GitHub Pages. Não é necessário servidor próprio.
+
+
+### v4
+Esta versão usa um nome de script novo (`script-v4.js`) e um parâmetro de versão no carregamento para evitar que o navegador/GitHub Pages mantenha o JavaScript antigo em cache. O CSV também aceita cabeçalhos genéricos A/B, tratando A como Software e B como Status.
