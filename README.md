@@ -1,42 +1,37 @@
 # Painel de Instaladores MSI
 
-Dashboard estático para GitHub Pages integrado à planilha Google Sheets.
+Dashboard estático para GitHub Pages, alimentado pela aba `Softwares` do Google Sheets.
 
-## Planilha configurada
+## Fonte de dados configurada
 
-ID da planilha:
+https://docs.google.com/spreadsheets/d/e/2PACX-1vTkjRpZsinwht385Qhwt5-vK-Lvmf5QN88ttP07XzvX6tvNOrLwkr8NaSTHpFGfo1NiwuoR0oUP22I_/pub?gid=474438347&single=true&output=csv
 
-`1-ZQQLvMGEDSwDRiigtNo2vvCZhoS3OUdgK0423gW-Jg`
+## Estrutura esperada
 
-Aba `Softwares`:
+A primeira linha da aba publicada deve conter exatamente:
 
 - `Software`
 - `Status`
 
-GID configurado:
+Os status esperados são:
 
-`474438347`
+- `Em Consulta`
+- `Sem pacote oficial`
+- `Disponível no \\Mídias`
 
-## Status padronizados
+## Atualização
 
-- Em Consulta
-- Sem pacote oficial
-- Disponível no \\Mídias
+O painel consulta a planilha automaticamente a cada 30 segundos e usa um parâmetro de timestamp para evitar cache do navegador.
 
-## Arquivos
+## Publicação no GitHub Pages
 
-- `index.html` — página do dashboard
-- `style.css` — visual
-- `script.js` — integração com Google Sheets e atualização automática
-- `README.md` — instruções
+1. Extraia os arquivos.
+2. Coloque `index.html`, `style.css`, `script.js` e `README.md` no repositório.
+3. Em **Settings → Pages**, selecione a branch/pasta usada pelo projeto.
+4. Acesse a URL fornecida pelo GitHub Pages.
 
-## Publicação
+## Se a página ficar sem dados
 
-1. Coloque os quatro arquivos na raiz do repositório GitHub.
-2. Acesse `Settings > Pages`.
-3. Em Source, escolha `Deploy from a branch`.
-4. Selecione `main` e `/ (root)`.
-5. Salve.
-6. Garanta que a planilha esteja acessível/publicada para leitura pela página.
+Abra o console do navegador (F12 → Console). O painel também apresenta uma mensagem de erro na própria página.
 
-O dashboard consulta a planilha a cada 30 segundos.
+A URL configurada é uma publicação CSV do Google Sheets, portanto a planilha precisa continuar publicada na web e a aba `Softwares` precisa manter os cabeçalhos `Software` e `Status`.
