@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Instaladores MSI</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="eyebrow">SESI • SENAI</span><h1>Painel de Instaladores MSI</h1><p>Controle dos softwares, status e locais dos pacotes para implantação em massa.</p></div>
+  <div class="update-box"><div class="update-label">Dados da planilha</div><strong id="lastUpdate">Aguardando consulta...</strong><span id="connectionStatus" class="connection loading">Iniciando conexão...</span></div>
+</header>
+<nav class="nav"><div class="nav-inner"><div class="nav-segment" aria-label="Navegação principal">
+  <button class="nav-btn active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+</div></div></nav>
+<main class="container">
+  <div id="errorBox" class="notice hidden"></div>
+  <section id="page-dashboard" class="page">
+    <section class="cards" aria-label="Filtros rápidos do catálogo">
+      <article class="card filter-card" data-filter="" tabindex="0" role="button" aria-pressed="false"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
+      <article class="card filter-card" data-filter="Em Consulta" tabindex="0" role="button" aria-pressed="false"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
+      <article class="card filter-card" data-filter="Sem pacote oficial" tabindex="0" role="button" aria-pressed="false"><span>Sem pacote oficial</span><strong id="semPacote">0</strong><small>sem instalador oficial</small></article>
+      <article class="card filter-card" data-filter="Disponível no Mídias" tabindex="0" role="button" aria-pressed="false"><span>Disponível no Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
+      <article class="card filter-card" data-filter="Disponível pelo Fabricante" tabindex="0" role="button" aria-pressed="false"><span>Disponível pelo Fabricante</span><strong id="fabricante">0</strong><small>pacote disponível no fabricante</small></article>
+    </section>
+    <section class="overview">
+      <div class="panel progress-panel">
+        <div class="section-heading">
+          <div><span class="section-kicker">Acompanhamento</span><h2>Progresso do catálogo</h2></div>
+          <strong id="progressPercent">0%</strong>
+        </div>
+        <div class="progress-track" aria-label="Distribuição dos softwares por status">
+          <div id="progressAvailable" class="progress-segment available-segment" title="Disponível"></div>
+          <div id="progressNoPackage" class="progress-segment none-segment" title="Sem pacote oficial"></div>
+        </div>
+        <div class="progress-summary">
+          <div class="progress-item"><span class="progress-dot available-dot"></span><div><strong id="progressAvailableCount">0</strong> <span>Disponível</span><small id="progressAvailablePercent">0%</small></div></div>
+          <div class="progress-item"><span class="progress-dot none-dot"></span><div><strong id="progressNoPackageCount">0</strong> <span>Sem pacote oficial</span><small id="progressNoPackagePercent">0%</small></div></div>
+          <div class="progress-item"><span class="progress-dot consulta-dot"></span><div><strong id="progressConsultaCount">0</strong> <span>Em Consulta</span><small id="progressConsultaPercent">0%</small></div></div>
+        </div>
+        <p class="muted" id="progressDetail">Disponível: 0 no Mídias + 0 pelo fabricante.</p>
+      </div>
+    </section>
+    <section class="panel table-panel">
+      <div class="table-head"><div><span class="section-kicker">Catálogo</span><h2>Softwares cadastrados</h2><p class="muted" id="resultCount">0 registros</p></div><div class="actions"><button id="refreshButton" type="button">↻ Atualizar agora</button></div></div>
+      <div class="filters"><label>Pesquisar<input id="search" type="search" placeholder="Digite o nome do software..."></label></div>
+      <div class="table-wrap"><table class="software-table"><colgroup><col class="col-software"><col class="col-status"><col class="col-link"></colgroup><thead><tr><th>Software</th><th>Status</th><th>Link / local de obtenção</th></tr></thead><tbody id="softwareTable"><tr><td colspan="3" class="empty">Preparando consulta à planilha...</td></tr></tbody></table></div>
+    </section>
+  </section>
+</main>
+<footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
+<script src="script.js?v=20260928-34"></script>
+</body></html>
