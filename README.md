@@ -64,3 +64,17 @@ A diferença é que os dados agora são lidos diretamente pelo Apps Script usand
 ## Observação sobre permissões
 
 O Web App precisa conseguir acessar a planilha. Como o código usa `SpreadsheetApp.openById()`, a implantação deve executar como a conta proprietária/autorizada do script. O nível de acesso do Web App deve ser compatível com o público do Google Sites.
+
+
+### v33 — visualização consolidada
+- Remove o gráfico de rosca redundante.
+- Substitui os dois gráficos por uma única barra segmentada de distribuição do catálogo.
+- Exibe Disponível como soma de Mídias + Fabricante.
+- Exibe percentuais e quantidades de Disponível, Sem pacote oficial e Em Consulta.
+- Mostra o detalhamento de Disponível: Mídias + Fabricante.
+- O bloco de distribuição e os itens de status podem ser usados para filtrar a tabela.
+- O card Disponível também filtra conjuntamente Mídias e Fabricante.
+- O card Fabricante informa que sua quantidade já está incluída em Disponível, evitando interpretação de soma duplicada.
+- Ajusta os cinco cards para caberem em uma única linha em telas amplas.
+
+**Importante:** após substituir o código no Apps Script, faça uma nova implantação/atualização do Web App para que o Google Sites carregue a versão v33.
