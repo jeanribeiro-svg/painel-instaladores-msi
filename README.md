@@ -13,3 +13,7 @@ Colunas esperadas: `Software | Tipo | Link | Observação`
 - Caminhos de rede iniciados por `\\`: botão **Copiar endereço**, para colar diretamente no Windows Explorer.
 
 Não é necessário instalar nenhum programa ou executar BAT nas máquinas.
+
+
+### Novo status v35
+Use na coluna `Status` da planilha: `Deploy via rede` — para softwares que possuem manual oficial de implantação via rede, mas não possuem instalador pronto específico para essa finalidade. O dashboard trata esse status como filtro clicável e também como segmento próprio no progresso do catálogo.

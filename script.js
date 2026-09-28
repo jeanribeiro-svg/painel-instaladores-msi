@@ -8,9 +8,10 @@ const CONFIG = {
 
 const STATUS = {
   CONSULTA: "Em Consulta",
-  SEM_PACOTE: "Sem pacote oficial",
+  SEM_SOLUCAO: "Sem solução oficial",
   DISPONIVEL: "Disponível no \\Mídias",
-  FABRICANTE: "Disponível pelo Fabricante"
+  FABRICANTE: "Disponível pelo Fabricante",
+  DEPLOY_ORIENTACAO: "Deploy via orientação do fabricante"
 };
 
 let allRows = [], hasLoadedData = false, activeFilter = "";
@@ -18,11 +19,12 @@ function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").replace(/^\uFEFF/, "").replace(/\u00A0/g, " ").trim(); }
 function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase(); }
 function canonicalStatus(value) {
-  const raw = normalize(value), key = normalizeStatus(raw);
+  const raw=normalize(value), key=normalizeStatus(raw);
   if (key === normalizeStatus(STATUS.CONSULTA)) return STATUS.CONSULTA;
-  if (key === normalizeStatus(STATUS.SEM_PACOTE)) return STATUS.SEM_PACOTE;
+  if (key === normalizeStatus(STATUS.SEM_SOLUCAO) || key === normalizeStatus("Sem pacote oficial")) return STATUS.SEM_SOLUCAO;
   if (key === normalizeStatus(STATUS.DISPONIVEL) || key === normalizeStatus("Disponível no Mídias")) return STATUS.DISPONIVEL;
   if (key === normalizeStatus(STATUS.FABRICANTE)) return STATUS.FABRICANTE;
+  if (key === normalizeStatus(STATUS.DEPLOY_ORIENTACAO) || key === normalizeStatus("Deploy via rede") || key === normalizeStatus("Deploy via rede (manual)") || key === normalizeStatus("Manual de deploy via rede")) return STATUS.DEPLOY_ORIENTACAO;
   return raw;
 }
 function isHeaderRow(a,b,c) {
@@ -91,40 +93,47 @@ function loadData(){
 function statusClass(status){
   if(status===STATUS.DISPONIVEL||status===STATUS.FABRICANTE)return"available";
   if(status===STATUS.CONSULTA)return"consulta";
-  if(status===STATUS.SEM_PACOTE)return"none";
+  if(status===STATUS.SEM_SOLUCAO)return"none";
+  if(status===STATUS.DEPLOY_ORIENTACAO)return"deploy";
   return"unknown";
 }
 
 function updateDashboard(){
   const total=allRows.length,
     consulta=allRows.filter(r=>r.status===STATUS.CONSULTA).length,
-    semPacote=allRows.filter(r=>r.status===STATUS.SEM_PACOTE).length,
+    semSolucao=allRows.filter(r=>r.status===STATUS.SEM_SOLUCAO).length,
     disponivel=allRows.filter(r=>r.status===STATUS.DISPONIVEL).length,
     fabricante=allRows.filter(r=>r.status===STATUS.FABRICANTE).length,
+    deployOrientacao=allRows.filter(r=>r.status===STATUS.DEPLOY_ORIENTACAO).length,
     disponivelTotal=disponivel+fabricante,
-    acompanhado=disponivelTotal+semPacote,
+    acompanhado=disponivelTotal+semSolucao+deployOrientacao,
     progressPercent=total?acompanhado/total*100:0,
     disponivelPercent=total?disponivelTotal/total*100:0,
-    semPacotePercent=total?semPacote/total*100:0,
+    semSolucaoPercent=total?semSolucao/total*100:0,
+    deployOrientacaoPercent=total?deployOrientacao/total*100:0,
     consultaPercent=total?consulta/total*100:0;
 
   $("total").textContent=total;
   $("emConsulta").textContent=consulta;
-  $("semPacote").textContent=semPacote;
+  $("semSolucao").textContent=semSolucao;
   $("disponivel").textContent=disponivel;
   $("fabricante").textContent=fabricante;
+  $("deployOrientacao").textContent=deployOrientacao;
 
   $("progressPercent").textContent=`${progressPercent.toFixed(1)}%`;
   $("progressAvailable").style.width=`${disponivelPercent}%`;
-  $("progressNoPackage").style.width=`${semPacotePercent}%`;
+  $("progressNoSolution").style.width=`${semSolucaoPercent}%`;
+  $("progressDeployOrientacao").style.width=`${deployOrientacaoPercent}%`;
 
   $("progressAvailableCount").textContent=disponivelTotal;
   $("progressAvailablePercent").textContent=`${disponivelPercent.toFixed(1)}%`;
-  $("progressNoPackageCount").textContent=semPacote;
-  $("progressNoPackagePercent").textContent=`${semPacotePercent.toFixed(1)}%`;
+  $("progressNoSolutionCount").textContent=semSolucao;
+  $("progressNoSolutionPercent").textContent=`${semSolucaoPercent.toFixed(1)}%`;
+  $("progressDeployOrientacaoCount").textContent=deployOrientacao;
+  $("progressDeployOrientacaoPercent").textContent=`${deployOrientacaoPercent.toFixed(1)}%`;
   $("progressConsultaCount").textContent=consulta;
   $("progressConsultaPercent").textContent=`${consultaPercent.toFixed(1)}%`;
-  $("progressDetail").textContent=`Disponível: ${disponivel} no Mídias + ${fabricante} pelo fabricante. Total acompanhado: ${acompanhado} de ${total}.`;
+  $("progressDetail").textContent=`Disponível: ${disponivel} no Mídias + ${fabricante} pelo fabricante. Deploy via orientação do fabricante: ${deployOrientacao}. Sem solução oficial: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
 
   renderTable();
 }
