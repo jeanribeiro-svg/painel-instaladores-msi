@@ -1,19 +1,44 @@
-# Painel de Instaladores MSI
+# Painel de Instaladores MSI — v38
 
-- Dashboard com status dos softwares
-- Aba Mídias / Downloads
-- CSV da aba Midias: GID 728409259
-- Atualização automática a cada 30 segundos
+Dashboard HTML estático para GitHub Pages, alimentado por uma publicação CSV do Google Sheets.
 
-## Aba Midias
-Colunas esperadas: `Software | Tipo | Link | Observação`
+## Estrutura da planilha
 
-## Botão de ação
-- Endereços `http://` e `https://`: botão **Abrir**, em nova aba do navegador.
-- Caminhos de rede iniciados por `\\`: botão **Copiar endereço**, para colar diretamente no Windows Explorer.
+A aba `Softwares` utiliza estas colunas:
 
-Não é necessário instalar nenhum programa ou executar BAT nas máquinas.
+1. `Software`
+2. `Status`
+3. `LINK`
+4. `Exemplo de comando de instalação`
 
+O dashboard exibe a quarta coluna com o nome `Comando de instalação`.
 
-### Novo status v35
-Use na coluna `Status` da planilha: `Deploy via rede` — para softwares que possuem manual oficial de implantação via rede, mas não possuem instalador pronto específico para essa finalidade. O dashboard trata esse status como filtro clicável e também como segmento próprio no progresso do catálogo.
+## Comando de instalação
+
+A coluna deve conter um exemplo de comando CMD ou PowerShell para instalação silenciosa, preferencialmente com instalação para todos os usuários (`ALLUSERS`) quando o instalador suportar esse parâmetro.
+
+O dashboard disponibiliza o botão `Copiar comando` para copiar o comando integralmente.
+
+Exemplos:
+
+```cmd
+msiexec /i "\\servidor\mídias\Software\software.msi" /qn ALLUSERS=1
+```
+
+```powershell
+Start-Process ".\setup.exe" -ArgumentList "/S" -Wait
+```
+
+Os parâmetros devem ser definidos conforme a documentação do fabricante; não se deve assumir que todo instalador aceita `ALLUSERS=1`.
+
+## Status aceitos
+
+- `Em Consulta`
+- `Disponível no Mídias`
+- `Disponível pelo Fabricante`
+- `Deploy via orientação do fabricante`
+- `Sem solução oficial`
+
+## Filtros
+
+Os cards superiores funcionam como filtros rápidos. O card `Total` representa todos os registros e permanece destacado quando nenhum filtro de status está aplicado.

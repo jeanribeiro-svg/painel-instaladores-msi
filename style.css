@@ -157,3 +157,14 @@
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:500px){.cards{grid-template-columns:1fr}.card{padding:14px 15px}}
+
+/* v38: catálogo com comando de instalação */
+.software-table .col-software{width:27%;}
+.software-table .col-status{width:20%;}
+.software-table .col-link{width:26%;}
+.software-table .col-command{width:27%;}
+.software-table .command-cell{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;}
+.software-table .command-text{display:block;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Consolas,"Courier New",monospace;font-size:11px;color:#4b5563;background:#f7f9fc;border:1px solid #e5eaf0;border-radius:5px;padding:5px 7px;}
+.software-table .copy-command{flex:0 0 auto;}
+@media(max-width:1100px){.software-table .col-software{width:23%;}.software-table .col-status{width:20%;}.software-table .col-link{width:28%;}.software-table .col-command{width:29%;}}
+@media(max-width:850px){.software-table .col-software{width:22%;}.software-table .col-status{width:20%;}.software-table .col-link{width:29%;}.software-table .col-command{width:29%;}}

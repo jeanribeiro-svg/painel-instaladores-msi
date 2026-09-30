@@ -27,8 +27,9 @@ function canonicalStatus(value) {
   if (key === normalizeStatus(STATUS.DEPLOY_ORIENTACAO) || key === normalizeStatus("Deploy via rede") || key === normalizeStatus("Deploy via rede (manual)") || key === normalizeStatus("Manual de deploy via rede")) return STATUS.DEPLOY_ORIENTACAO;
   return raw;
 }
-function isHeaderRow(a,b,c) {
-  return normalize(a).toLowerCase() === "software" && normalize(b).toLowerCase() === "status" && (!c || normalize(c).toLowerCase() === "link");
+function isHeaderRow(a,b,c,d) {
+  const headers=[normalize(a).toLowerCase(),normalize(b).toLowerCase(),normalize(c).toLowerCase(),normalize(d).toLowerCase()];
+  return headers[0] === "software" && headers[1] === "status";
 }
 function setConnection(text,type="neutral") { const el=$("connectionStatus"); if(el){el.textContent=text;el.className=`connection ${type}`;} }
 function setLastUpdate(text) { if($("lastUpdate")) $("lastUpdate").textContent=text; }
@@ -52,14 +53,15 @@ function parseSheetData(text) {
   const parsed=parseCSV(text.replace(/^\uFEFF/, ""));
   if(!parsed.length)return{rows:[],empty:true};
   const first=parsed[0].map(normalize), lower=first.map(h=>h.toLowerCase());
-  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status") || lower.some(h=>h==="link");
-  let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status"), linkIndex=lower.findIndex(h=>h==="link");
+  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status") || lower.some(h=>h==="link") || lower.some(h=>h.includes("comando") || h.includes("instalação"));
+  let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status"), linkIndex=lower.findIndex(h=>h==="link"), commandIndex=lower.findIndex(h=>h.includes("comando") || h.includes("instalação"));
   if(softwareIndex<0)softwareIndex=0;
   if(statusIndex<0)statusIndex=1;
   if(linkIndex<0)linkIndex=2;
+  if(commandIndex<0)commandIndex=3;
   const dataRows=hasHeader?parsed.slice(1):parsed;
-  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex]),link:normalize(r[linkIndex])}))
-    .filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.link));
+  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex]),link:normalize(r[linkIndex]),command:normalize(r[commandIndex])}))
+    .filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.link,r.command));
   return{rows,empty:rows.length===0};
 }
 
@@ -139,7 +141,7 @@ function updateDashboard(){
 }
 
 function renderEmptyState(message){
-  $("softwareTable").innerHTML=`<tr><td colspan="3" class="empty">${escapeHtml(message)}</td></tr>`;
+  $("softwareTable").innerHTML=`<tr><td colspan="4" class="empty">${escapeHtml(message)}</td></tr>`;
   $("resultCount").textContent="0 registros";
 }
 
@@ -149,16 +151,17 @@ function renderTable(){
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
     const i=allRows.indexOf(r);
-    const link=r.link||"—";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td><td class="link-cell" title="${escapeHtml(link)}"><span class="link-text">${escapeHtml(link)}</span>${r.link?`<button type="button" class="copy-link" data-row-index="${i}">Copiar endereço</button>`:""}</td></tr>`;
-  }).join(""):`<tr><td colspan="3" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
+    const link=r.link||"—", command=r.command||"—";
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td><td class="link-cell" title="${escapeHtml(link)}"><span class="link-text">${escapeHtml(link)}</span>${r.link?`<button type="button" class="copy-link" data-copy-type="link" data-row-index="${i}">Copiar endereço</button>`:""}</td><td class="command-cell" title="${escapeHtml(command)}"><code class="command-text">${escapeHtml(command)}</code>${r.command?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
+  }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
 function updateFilterCards(){
   document.querySelectorAll(".filter-card").forEach(card=>{
-    const active=canonicalStatus(card.dataset.filter||"")===canonicalStatus(activeFilter);
-    card.classList.toggle("active-filter",!!activeFilter&&active);
-    card.setAttribute("aria-pressed",activeFilter&&active?"true":"false");
+    const cardFilter=card.dataset.filter||"";
+    const active=cardFilter==="" ? activeFilter==="" : canonicalStatus(cardFilter)===canonicalStatus(activeFilter);
+    card.classList.toggle("active-filter",active);
+    card.setAttribute("aria-pressed",active?"true":"false");
   });
 }
 
@@ -168,14 +171,16 @@ function setActiveFilter(filter){
   renderTable();
 }
 
-function copyAddress(link,button){
-  const x=String(link??"").replace(/^\uFEFF/,"").replace(/\u00A0/g," ").trim();
+function copyValue(value,button,label="Copiar"){
+  const x=String(value??"").replace(/^\uFEFF/,"").replace(/\u00A0/g," ").trim();
   if(!x)return;
   try{
     if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(x).then(()=>copiedFeedback(button)).catch(()=>fallbackCopy(x,button));
     else fallbackCopy(x,button);
   }catch(e){fallbackCopy(x,button);}
 }
+function copyAddress(link,button){copyValue(link,button,"Copiar endereço");}
+function copyCommand(command,button){copyValue(command,button,"Copiar comando");}
 function fallbackCopy(x,button){
   const ta=document.createElement("textarea");ta.value=x;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();
   try{if(!document.execCommand("copy"))throw new Error("copy failed");copiedFeedback(button);}catch(e){alert("Não foi possível copiar o endereço.\n\n"+x);}finally{ta.remove();}
@@ -185,7 +190,7 @@ function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceA
 
 document.addEventListener("click",e=>{
   const copy=e.target.closest(".copy-link");
-  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i])copyAddress(allRows[i].link,copy);}
+  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i]){if(copy.dataset.copyType==="command")copyCommand(allRows[i].command,copy);else copyAddress(allRows[i].link,copy);}}
 });
 
 function init(){
