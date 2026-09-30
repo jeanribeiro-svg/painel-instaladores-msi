@@ -1,4 +1,4 @@
-# Painel de Instaladores MSI — v38
+# Painel de Instaladores MSI — v39
 
 Dashboard HTML estático para GitHub Pages, alimentado por uma publicação CSV do Google Sheets.
 

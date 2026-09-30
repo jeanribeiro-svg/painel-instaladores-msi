@@ -168,3 +168,30 @@
 .software-table .copy-command{flex:0 0 auto;}
 @media(max-width:1100px){.software-table .col-software{width:23%;}.software-table .col-status{width:20%;}.software-table .col-link{width:28%;}.software-table .col-command{width:29%;}}
 @media(max-width:850px){.software-table .col-software{width:22%;}.software-table .col-status{width:20%;}.software-table .col-link{width:29%;}.software-table .col-command{width:29%;}}
+
+/* v39: tabela do catálogo com quatro colunas realmente lado a lado */
+.software-table{table-layout:fixed !important;width:100% !important;min-width:0 !important;}
+.software-table col.col-software{width:22% !important;}
+.software-table col.col-status{width:19% !important;}
+.software-table col.col-link{width:29% !important;}
+.software-table col.col-command{width:30% !important;}
+.software-table th,.software-table td{min-width:0;}
+.software-table .link-cell,.software-table .command-cell{width:auto;max-width:none;min-width:0;}
+.software-table .link-cell{gap:6px;}
+.software-table .command-cell{gap:6px;}
+.software-table .command-text{min-width:0;max-width:none;}
+.software-table .copy-link,.software-table .copy-command{padding:6px 8px;font-size:10px;}
+@media(max-width:1100px){
+  .software-table{min-width:0 !important;}
+  .software-table col.col-software{width:21% !important;}
+  .software-table col.col-status{width:19% !important;}
+  .software-table col.col-link{width:30% !important;}
+  .software-table col.col-command{width:30% !important;}
+}
+@media(max-width:850px){
+  .software-table{min-width:920px !important;}
+  .software-table col.col-software{width:21% !important;}
+  .software-table col.col-status{width:19% !important;}
+  .software-table col.col-link{width:30% !important;}
+  .software-table col.col-command{width:30% !important;}
+}
