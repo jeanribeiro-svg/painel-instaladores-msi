@@ -126,6 +126,8 @@ function updateDashboard(){
   $("progressAvailable").style.width=`${disponivelPercent}%`;
   $("progressNoSolution").style.width=`${semSolucaoPercent}%`;
   $("progressDeployOrientacao").style.width=`${deployOrientacaoPercent}%`;
+  $("progressConsulta").style.width=`${consultaPercent}%`;
+  updateProgressHighlight();
 
   $("progressAvailableCount").textContent=disponivelTotal;
   $("progressAvailablePercent").textContent=`${disponivelPercent.toFixed(1)}%`;
@@ -165,9 +167,38 @@ function updateFilterCards(){
   });
 }
 
+function updateProgressHighlight(){
+  const selected=canonicalStatus(activeFilter);
+  const map={
+    available:["progressAvailable","available"],
+    none:["progressNoSolution","none"],
+    deploy:["progressDeployOrientacao","deploy"],
+    consulta:["progressConsulta","consulta"]
+  };
+  const allSegments=["progressAvailable","progressNoSolution","progressDeployOrientacao","progressConsulta"];
+  const allItems=[...document.querySelectorAll(".progress-item[data-progress-filter]")];
+  const key=selected===STATUS.DISPONIVEL||selected===STATUS.FABRICANTE?"available":
+    selected===STATUS.SEM_SOLUCAO?"none":
+    selected===STATUS.DEPLOY_ORIENTACAO?"deploy":
+    selected===STATUS.CONSULTA?"consulta":"";
+
+  allSegments.forEach(id=>{
+    const el=$(id);
+    if(!el)return;
+    el.classList.toggle("graph-active",!!key && map[key]?.[0]===id);
+    el.classList.toggle("graph-dimmed",!!key && map[key]?.[0]!==id);
+  });
+  allItems.forEach(item=>{
+    const active=!!key && item.dataset.progressFilter===key;
+    item.classList.toggle("graph-active",active);
+    item.classList.toggle("graph-dimmed",!!key && !active);
+  });
+}
+
 function setActiveFilter(filter){
   activeFilter=canonicalStatus(filter||"");
   updateFilterCards();
+  updateProgressHighlight();
   renderTable();
 }
 
@@ -204,6 +235,7 @@ function init(){
     });
   });
   updateFilterCards();
+  updateProgressHighlight();
   loadData();
   setInterval(loadData,CONFIG.REFRESH_INTERVAL_MS);
 }

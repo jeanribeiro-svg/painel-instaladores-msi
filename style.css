@@ -195,3 +195,45 @@
   .software-table col.col-link{width:30% !important;}
   .software-table col.col-command{width:30% !important;}
 }
+
+/* v40: tabela realmente lado a lado + destaque do filtro no progresso */
+.software-table .link-cell,
+.software-table .command-cell{
+  display:table-cell !important;
+  vertical-align:middle;
+  overflow:hidden;
+  text-overflow:clip;
+}
+.software-table .link-text,
+.software-table .command-text{
+  display:inline-block;
+  vertical-align:middle;
+  min-width:0;
+  max-width:calc(100% - 105px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.software-table .copy-link,
+.software-table .copy-command{
+  display:inline-block;
+  vertical-align:middle;
+  margin-left:5px;
+}
+.software-table .command-text{
+  box-sizing:border-box;
+}
+.progress-track .consulta-segment{background:#d99a20;}
+.progress-segment{transition:width .4s ease,opacity .2s ease,filter .2s ease,transform .2s ease;}
+.progress-segment.graph-dimmed{opacity:.22;}
+.progress-segment.graph-active{opacity:1;filter:saturate(1.15);}
+.progress-item{transition:opacity .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease;}
+.progress-item.graph-dimmed{opacity:.38;}
+.progress-item.graph-active{border-color:#1769c2;background:#eaf3ff;box-shadow:0 2px 8px rgba(23,105,194,.08);opacity:1;}
+.progress-item.graph-active .available-dot{box-shadow:0 0 0 3px rgba(23,105,194,.12);}
+.progress-item.graph-active .none-dot{box-shadow:0 0 0 3px rgba(209,91,91,.12);}
+.progress-item.graph-active .deploy-dot{box-shadow:0 0 0 3px rgba(123,97,184,.12);}
+.progress-item.graph-active .consulta-dot{box-shadow:0 0 0 3px rgba(217,154,32,.14);}
+@media(max-width:850px){
+  .software-table{min-width:920px !important;}
+}

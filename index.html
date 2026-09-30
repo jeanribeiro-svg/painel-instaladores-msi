@@ -33,12 +33,13 @@
           <div id="progressAvailable" class="progress-segment available-segment" title="Disponível"></div>
           <div id="progressNoSolution" class="progress-segment none-segment" title="Sem solução oficial"></div>
           <div id="progressDeployOrientacao" class="progress-segment deploy-segment" title="Deploy via orientação do fabricante"></div>
+          <div id="progressConsulta" class="progress-segment consulta-segment" title="Em Consulta"></div>
         </div>
         <div class="progress-summary">
-          <div class="progress-item"><span class="progress-dot available-dot"></span><div><strong id="progressAvailableCount">0</strong> <span>Disponível</span><small id="progressAvailablePercent">0%</small></div></div>
-          <div class="progress-item"><span class="progress-dot none-dot"></span><div><strong id="progressNoSolutionCount">0</strong> <span>Sem solução oficial</span><small id="progressNoSolutionPercent">0%</small></div></div>
-          <div class="progress-item"><span class="progress-dot deploy-dot"></span><div><strong id="progressDeployOrientacaoCount">0</strong> <span>Deploy via orientação do fabricante</span><small id="progressDeployOrientacaoPercent">0%</small></div></div>
-          <div class="progress-item"><span class="progress-dot consulta-dot"></span><div><strong id="progressConsultaCount">0</strong> <span>Em Consulta</span><small id="progressConsultaPercent">0%</small></div></div>
+          <div class="progress-item" data-progress-filter="available"><span class="progress-dot available-dot"></span><div><strong id="progressAvailableCount">0</strong> <span>Disponível</span><small id="progressAvailablePercent">0%</small></div></div>
+          <div class="progress-item" data-progress-filter="none"><span class="progress-dot none-dot"></span><div><strong id="progressNoSolutionCount">0</strong> <span>Sem solução oficial</span><small id="progressNoSolutionPercent">0%</small></div></div>
+          <div class="progress-item" data-progress-filter="deploy"><span class="progress-dot deploy-dot"></span><div><strong id="progressDeployOrientacaoCount">0</strong> <span>Deploy via orientação do fabricante</span><small id="progressDeployOrientacaoPercent">0%</small></div></div>
+          <div class="progress-item" data-progress-filter="consulta"><span class="progress-dot consulta-dot"></span><div><strong id="progressConsultaCount">0</strong> <span>Em Consulta</span><small id="progressConsultaPercent">0%</small></div></div>
         </div>
         <p class="muted" id="progressDetail">Disponível: 0 no Mídias + 0 pelo fabricante.</p>
       </div>
@@ -51,5 +52,5 @@
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script.js?v=20260930-38"></script>
+<script src="script.js?v=20260930-40"></script>
 </body></html>
