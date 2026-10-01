@@ -147,14 +147,14 @@ function updateDashboard(){
   $("progressConsulta").style.width=`${consultaPercent}%`;
   updateProgressHighlight();
 
-  $("progressAvailableCount").textContent=disponivelTotal;
-  $("progressAvailablePercent").textContent=`${disponivelPercent.toFixed(1)}%`;
-  $("progressNoSolutionCount").textContent=semSolucao;
-  $("progressNoSolutionPercent").textContent=`${semSolucaoPercent.toFixed(1)}%`;
-  $("progressDeployOrientacaoCount").textContent=deployOrientacao;
-  $("progressDeployOrientacaoPercent").textContent=`${deployOrientacaoPercent.toFixed(1)}%`;
-  $("progressConsultaCount").textContent=consulta;
-  $("progressConsultaPercent").textContent=`${consultaPercent.toFixed(1)}%`;
+  if($("progressAvailableCount")) $("progressAvailableCount").textContent=disponivelTotal;
+  if($("progressAvailablePercent")) $("progressAvailablePercent").textContent=`${disponivelPercent.toFixed(1)}%`;
+  if($("progressNoSolutionCount")) $("progressNoSolutionCount").textContent=semSolucao;
+  if($("progressNoSolutionPercent")) $("progressNoSolutionPercent").textContent=`${semSolucaoPercent.toFixed(1)}%`;
+  if($("progressDeployOrientacaoCount")) $("progressDeployOrientacaoCount").textContent=deployOrientacao;
+  if($("progressDeployOrientacaoPercent")) $("progressDeployOrientacaoPercent").textContent=`${deployOrientacaoPercent.toFixed(1)}%`;
+  if($("progressConsultaCount")) $("progressConsultaCount").textContent=consulta;
+  if($("progressConsultaPercent")) $("progressConsultaPercent").textContent=`${consultaPercent.toFixed(1)}%`;
   $("progressDetail").textContent=`Disponível: ${disponivel} no Mídias + ${fabricante} pelo fabricante. Deploy via orientação do fabricante: ${deployOrientacao}. Sem solução oficial: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
 
   renderTable();
