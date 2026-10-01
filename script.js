@@ -3,7 +3,7 @@ const CONFIG = {
   GOOGLE_SHEET_ID: "1-ZQQLvMGEDSwDRiigtNo2vvCZhoS3OUdgK0423gW-Jg",
   GOOGLE_SHEET_GID: "474438347",
   REFRESH_INTERVAL_MS: 30000,
-  REQUEST_TIMEOUT_MS: 10000
+  REQUEST_TIMEOUT_MS: 25000
 };
 
 const STATUS = {
@@ -65,10 +65,28 @@ function parseSheetData(text) {
   return{rows,empty:rows.length===0};
 }
 
-async function fetchCsv(url) {
+async function fetchOneCsv(url) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),CONFIG.REQUEST_TIMEOUT_MS);
-  try{const sep=url.includes("?")?"&":"?";const response=await fetch(url+sep+"cache="+Date.now(),{cache:"no-store",mode:"cors",signal:controller.signal});if(!response.ok)throw new Error(`HTTP ${response.status}`);return await response.text();}
-  finally{clearTimeout(timer);}
+  try {
+    const sep=url.includes("?")?"&":"?";
+    const response=await fetch(url+sep+"cache="+Date.now(),{cache:"no-store",mode:"cors",signal:controller.signal});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text=await response.text();
+    if(!text.trim() || /<html|<!doctype/i.test(text.slice(0,300))) throw new Error("A resposta não contém CSV");
+    return text;
+  } finally { clearTimeout(timer); }
+}
+async function fetchCsv(url) {
+  const alternatives=[
+    url,
+    `https://docs.google.com/spreadsheets/d/${CONFIG.GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${CONFIG.GOOGLE_SHEET_GID}`
+  ];
+  let lastError;
+  for(const candidate of alternatives) {
+    try { return await fetchOneCsv(candidate); }
+    catch(error) { lastError=error; console.warn("Falha ao consultar fonte da planilha:",candidate,error); }
+  }
+  throw lastError || new Error("Não foi possível acessar a planilha");
 }
 
 function loadData(){
