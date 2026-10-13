@@ -11,6 +11,8 @@ const STATUS = {
   FABRICANTE: "Disponível pelo Fabricante",
   DEPLOY_ORIENTACAO: "Deploy via orientação do fabricante"
 };
+const AVAILABLE_FILTER = "__disponivel__";
+function isAvailableStatus(status) { return status===STATUS.DISPONIVEL||status===STATUS.FABRICANTE; }
 
 let allRows = [], hasLoadedData = false, activeFilter = "", pendingLoad = null;
 function $(id) { return document.getElementById(id); }
@@ -108,7 +110,7 @@ function loadData(){
 }
 
 function statusClass(status){
-  if(status===STATUS.DISPONIVEL||status===STATUS.FABRICANTE)return"available";
+  if(isAvailableStatus(status))return"available";
   if(status===STATUS.CONSULTA)return"consulta";
   if(status===STATUS.SEM_SOLUCAO)return"none";
   if(status===STATUS.DEPLOY_ORIENTACAO)return"deploy";
@@ -133,8 +135,7 @@ function updateDashboard(){
   $("total").textContent=total;
   $("emConsulta").textContent=consulta;
   $("semSolucao").textContent=semSolucao;
-  $("disponivel").textContent=disponivel;
-  $("fabricante").textContent=fabricante;
+  $("disponivel").textContent=disponivelTotal;
   $("deployOrientacao").textContent=deployOrientacao;
 
   $("progressPercent").textContent=`${progressPercent.toFixed(1)}%`;
@@ -152,7 +153,7 @@ function updateDashboard(){
   if($("progressDeployOrientacaoPercent")) $("progressDeployOrientacaoPercent").textContent=`${deployOrientacaoPercent.toFixed(1)}%`;
   if($("progressConsultaCount")) $("progressConsultaCount").textContent=consulta;
   if($("progressConsultaPercent")) $("progressConsultaPercent").textContent=`${consultaPercent.toFixed(1)}%`;
-  $("progressDetail").textContent=`Disponível: ${disponivel} no Mídias + ${fabricante} pelo fabricante. Deploy via orientação do fabricante: ${deployOrientacao}. Sem solução oficial: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
+  $("progressDetail").textContent=`Disponível: ${disponivelTotal}. Deploy via orientação do fabricante: ${deployOrientacao}. Sem solução oficial: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
 
   renderTable();
 }
@@ -163,36 +164,54 @@ function renderEmptyState(message){
 }
 
 function getDeployInfo(row){
-  const source=row.link||"",isWeb=/^https:\/\//i.test(source),isNetwork=/^\\\\/.test(source);
-  return {download:row.download||(isWeb?source:""),network:isNetwork?source:"",other:source&&!isWeb&&!isNetwork?source:"",guide:row.guide||"",command:row.command||""};
+  const source=row.link||"",isWeb=/^https?:\/\//i.test(source),isNetwork=/^\\\\/.test(source);
+  const downloadValue=row.download||"",guideValue=row.guide||"";
+  const downloadUrl=/^https?:\/\//i.test(downloadValue)?downloadValue:"";
+  const guideUrl=/^https?:\/\//i.test(guideValue)?guideValue:"";
+  return {
+    download:downloadUrl||(isWeb?source:""),
+    downloadNote:downloadValue&&!downloadUrl?downloadValue:"",
+    network:isNetwork?source:"",
+    other:source&&!isWeb&&!isNetwork?source:"",
+    guide:guideUrl,
+    guideNote:guideValue&&!guideUrl?guideValue:"",
+    command:row.command||""
+  };
+}
+
+function isInstallCommand(value){
+  return /^(?:msiexec\b|setup(?:\.exe)?\b|start-process\b|python(?:\.exe)?\b|npm\b|fusion\s+client\s+downloader\.exe\b|pbidesktopsetup(?:_x64)?\.exe\b|(?:"[^"\r\n]+"|[^\s"']+)\.(?:exe|msi|bat|cmd)\b)/i.test(String(value||"").trim());
 }
 
 function renderTable(){
-  const search=normalize($("search")?.value).toLowerCase(),filter=canonicalStatus(activeFilter);
-  const rows=allRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||r.status===filter));
+  const search=normalize($("search")?.value).toLowerCase(),filter=activeFilter===AVAILABLE_FILTER?AVAILABLE_FILTER:canonicalStatus(activeFilter);
+  const rows=allRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||(filter===AVAILABLE_FILTER?isAvailableStatus(r.status):r.status===filter)));
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
     const i=allRows.indexOf(r);
-    const info=getDeployInfo(r), link=info.download||info.network||info.other||"—", command=info.command||"—";
+    const info=getDeployInfo(r), link=info.download||info.network||info.other||"—", command=info.command||"—", commandIsInstallCommand=isInstallCommand(info.command);
     const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>`:"";
     const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>`:"";
+    const instructionNotes=[info.downloadNote,info.guideNote].filter(Boolean).map(note=>`<span class="instruction-note">${escapeHtml(note)}</span>`).join("");
     const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span><button type="button" class="copy-link" data-copy-type="link" data-row-index="${i}">Copiar local de rede</button>`:"";
     const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>`:"";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${!info.download&&!info.network&&!info.other?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}"><code class="command-text">${escapeHtml(command)}</code>${info.command?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
+    const commandDisplay=commandIsInstallCommand?`<code class="command-text">${escapeHtml(command)}</code>`:info.command?`<span class="instruction-note command-note">${escapeHtml(command)}</span>`:"—";
+    const displayedStatus=isAvailableStatus(r.status)?"Disponível":r.status||"Sem status";
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${instructionNotes}${!info.download&&!info.network&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
   }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
 function updateFilterCards(){
   document.querySelectorAll(".filter-card").forEach(card=>{
     const cardFilter=card.dataset.filter||"";
-    const active=cardFilter==="" ? activeFilter==="" : canonicalStatus(cardFilter)===canonicalStatus(activeFilter);
+    const active=cardFilter==="" ? activeFilter==="" : cardFilter===AVAILABLE_FILTER?activeFilter===AVAILABLE_FILTER:canonicalStatus(cardFilter)===canonicalStatus(activeFilter);
     card.classList.toggle("active-filter",active);
     card.setAttribute("aria-pressed",active?"true":"false");
   });
 }
 
 function updateProgressHighlight(){
-  const selected=canonicalStatus(activeFilter);
+  const selected=activeFilter===AVAILABLE_FILTER?AVAILABLE_FILTER:canonicalStatus(activeFilter);
   const map={
     available:["progressAvailable","available"],
     none:["progressNoSolution","none"],
@@ -201,7 +220,7 @@ function updateProgressHighlight(){
   };
   const allSegments=["progressAvailable","progressNoSolution","progressDeployOrientacao","progressConsulta"];
   const allItems=[...document.querySelectorAll(".progress-item[data-progress-filter]")];
-  const key=selected===STATUS.DISPONIVEL||selected===STATUS.FABRICANTE?"available":
+  const key=selected===AVAILABLE_FILTER||selected===STATUS.DISPONIVEL||selected===STATUS.FABRICANTE?"available":
     selected===STATUS.SEM_SOLUCAO?"none":
     selected===STATUS.DEPLOY_ORIENTACAO?"deploy":
     selected===STATUS.CONSULTA?"consulta":"";

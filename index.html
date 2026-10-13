@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Instaladores MSI</title><link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#073c70">
+<title>Painel de Instaladores MSI</title><link rel="stylesheet" href="style.css?v=20261013-46">
 </head>
 <body>
 <header class="topbar">
@@ -22,8 +23,7 @@
       <article class="card filter-card" data-filter="" tabindex="0" role="button" aria-pressed="false"><span>Total</span><strong id="total">0</strong><small>softwares cadastrados</small></article>
       <article class="card filter-card" data-filter="Em Consulta" tabindex="0" role="button" aria-pressed="false"><span>Em Consulta</span><strong id="emConsulta">0</strong><small>em processo de consulta</small></article>
       <article class="card filter-card" data-filter="Sem solução oficial" tabindex="0" role="button" aria-pressed="false"><span>Sem solução oficial</span><strong id="semSolucao">0</strong><small>sem solução oficial localizada</small></article>
-      <article class="card filter-card" data-filter="Disponível no Mídias" tabindex="0" role="button" aria-pressed="false"><span>Disponível no Mídias</span><strong id="disponivel">0</strong><small>prontos para implantação</small></article>
-      <article class="card filter-card" data-filter="Disponível pelo Fabricante" tabindex="0" role="button" aria-pressed="false"><span>Disponível pelo Fabricante</span><strong id="fabricante">0</strong><small>pacote disponível no fabricante</small></article>
+      <article class="card filter-card" data-filter="__disponivel__" tabindex="0" role="button" aria-pressed="false"><span>Disponível</span><strong id="disponivel">0</strong><small>no Mídias ou no fabricante</small></article>
       <article class="card filter-card" data-filter="Deploy via orientação do fabricante" tabindex="0" role="button" aria-pressed="false"><span>Deploy via orientação do fabricante</span><strong id="deployOrientacao">0</strong><small>orientação oficial de implantação</small></article>
         </section>
         <div class="progress-track" aria-label="Distribuição dos softwares por status">
@@ -32,7 +32,7 @@
           <div id="progressDeployOrientacao" class="progress-segment deploy-segment" title="Deploy via orientação do fabricante"></div>
           <div id="progressConsulta" class="progress-segment consulta-segment" title="Em Consulta"></div>
         </div>
-        <p class="muted" id="progressDetail">Disponível: 0 no Mídias + 0 pelo fabricante.</p>
+        <p class="muted" id="progressDetail">Disponível: 0.</p>
       </div>
     </section>
     <section class="panel table-panel">
@@ -43,5 +43,5 @@
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script.js?v=20261013-44"></script>
+<script src="script.js?v=20261013-47"></script>
 </body></html>
