@@ -1,7 +1,5 @@
 const CONFIG = {
   GOOGLE_SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTkjRpZsinwht385Qhwt5-vK-Lvmf5QN88ttP07XzvX6tvNOrLwkr8NaSTHpFGfo1NiwuoR0oUP22I_/pub?gid=474438347&single=true&output=csv",
-  GOOGLE_SHEET_ID: "1-ZQQLvMGEDSwDRiigtNo2vvCZhoS3OUdgK0423gW-Jg",
-  GOOGLE_SHEET_GID: "474438347",
   REFRESH_INTERVAL_MS: 30000,
   REQUEST_TIMEOUT_MS: 25000
 };
@@ -14,7 +12,7 @@ const STATUS = {
   DEPLOY_ORIENTACAO: "Deploy via orientação do fabricante"
 };
 
-let allRows = [], hasLoadedData = false, activeFilter = "";
+let allRows = [], hasLoadedData = false, activeFilter = "", pendingLoad = null;
 function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").replace(/^\uFEFF/, "").replace(/\u00A0/g, " ").trim(); }
 function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase(); }
@@ -79,21 +77,17 @@ async function fetchOneCsv(url) {
   } finally { clearTimeout(timer); }
 }
 async function fetchCsv(url) {
-  const alternatives=[
-    url,
-    `https://docs.google.com/spreadsheets/d/${CONFIG.GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${CONFIG.GOOGLE_SHEET_GID}`
-  ];
-  let lastError;
-  for(const candidate of alternatives) {
-    try { return await fetchOneCsv(candidate); }
-    catch(error) { lastError=error; console.warn("Falha ao consultar fonte da planilha:",candidate,error); }
-  }
-  throw lastError || new Error("Não foi possível acessar a planilha");
+  // Use sempre o CSV publicado da planilha compartilhada. Consultar outra rota
+  // do Google Sheets pode retornar uma versão/formatação diferente dos dados.
+  return fetchOneCsv(url);
 }
 
 function loadData(){
+  // O botão de atualização e o temporizador podem disparar juntos. Compartilhe
+  // a mesma requisição para impedir respostas concorrentes de sobrescreverem a tela.
+  if(pendingLoad)return pendingLoad;
   setConnection("Consultando Google Sheets...","loading");
-  return fetchCsv(CONFIG.GOOGLE_SHEET_CSV_URL).then(text=>{
+  pendingLoad=fetchCsv(CONFIG.GOOGLE_SHEET_CSV_URL).then(text=>{
     const parsed=parseSheetData(text);
     allRows=parsed.rows;
     hasLoadedData=true;
@@ -109,7 +103,8 @@ function loadData(){
     updateDashboard();
     if(hasLoadedData)showError("Não foi possível atualizar os dados agora. Os dados anteriores continuam sendo exibidos.","warning");
     else{showError("Não foi possível obter os dados da planilha. Verifique se a publicação do Google Sheets está ativa e tente novamente.","error");renderEmptyState("Não foi possível carregar os dados.");}
-  });
+  }).finally(()=>{pendingLoad=null;});
+  return pendingLoad;
 }
 
 function statusClass(status){

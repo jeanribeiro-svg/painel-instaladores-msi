@@ -1,4 +1,4 @@
-# Painel de Instaladores MSI — v43
+# Painel de Instaladores MSI — v44
 
 Dashboard HTML estático para GitHub Pages, alimentado por uma publicação CSV do Google Sheets.
 
@@ -14,6 +14,8 @@ A aba `Softwares` utiliza estas colunas:
 6. `Instruções oficiais`
 
 O dashboard lê nome, status, links e comando diretamente dessas colunas no CSV publicado do Google Sheets. A coluna `LINK` continua sendo usada para caminho de rede ou link legado; os dois novos campos oferecem separadamente a página oficial e as instruções.
+
+O navegador consulta somente a URL CSV publicada configurada em `script.js`. Não há consulta alternativa `gviz`, para evitar que respostas com versões ou formatos diferentes da publicação se alternem. Se o botão Atualizar e a atualização automática coincidirem, a página compartilha a mesma requisição em andamento.
 
 ## Comando de instalação
 
@@ -49,6 +51,6 @@ Os cards superiores funcionam como filtros rápidos. O card `Total` representa t
 
 O catálogo oferece links clicáveis que são lidos das colunas `Download oficial` e `Instruções oficiais` da planilha. O JavaScript não acrescenta mais produtos, status, links ou comandos que não estejam na fonte publicada.
 
-Os comandos são modelos: substitua nomes de arquivo, versões, caminhos de rede e opções de licença/organização antes de publicar uma automação no Zoho Endpoint Manager. Valide cada pacote com um grupo piloto. Em especial, Office/Visio/Project exigem XML do Office Deployment Tool adequado à edição e licença; Docker Desktop possui requisitos e condições de licenciamento próprios; Visual Studio requer um layout de rede com os workloads aprovados. Produtos comerciais podem ficar sem referências públicas no catálogo, conforme a política deste levantamento. Quando o fornecedor não documenta instalação silenciosa, a coluna de comando informa essa limitação em vez de presumir parâmetros.
+Os comandos são modelos: substitua nomes de arquivo, versões, caminhos de rede e opções de licença/organização antes de publicar uma automação no Zoho Endpoint Manager. Valide cada pacote com um grupo piloto. Em especial, Office/Visio/Project exigem XML do Office Deployment Tool adequado à edição e licença; Docker Desktop possui requisitos e condições de licenciamento próprios; Visual Studio requer um layout de rede com os workloads aprovados. Produtos comerciais podem ficar sem referências públicas no catálogo, conforme a política deste levantamento. Quando o fornecedor não documenta implantação gerenciada, silenciosa ou por rede, o status deve ficar `Em consulta` para análise manual; não basta existir uma página de download ou um instalador comum para classificar como `Deploy via orientação do fabricante`.
 
 Após importar a planilha revisada no Google Sheets, publique a aba `Softwares` como CSV e confirme que a publicação inclui as seis colunas. O site volta a acompanhar a planilha a cada 30 segundos. Publique também os arquivos atualizados no GitHub Pages para aplicar a mudança do leitor.
