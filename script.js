@@ -53,15 +53,16 @@ function parseSheetData(text) {
   const parsed=parseCSV(text.replace(/^\uFEFF/, ""));
   if(!parsed.length)return{rows:[],empty:true};
   const first=parsed[0].map(normalize), lower=first.map(h=>h.toLowerCase());
-  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status") || lower.some(h=>h==="link") || lower.some(h=>h.includes("comando") || h.includes("instalação"));
-  let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status"), linkIndex=lower.findIndex(h=>h==="link"), commandIndex=lower.findIndex(h=>h.includes("comando") || h.includes("instalação"));
+  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status") || lower.some(h=>h==="link") || lower.some(h=>h.includes("comando") || h.includes("instalação") || h.includes("download") || h.includes("instruções"));
+  let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status"), linkIndex=lower.findIndex(h=>h==="link" || h.includes("link / rede")), commandIndex=lower.findIndex(h=>h.includes("comando") || h.includes("instalação")), downloadIndex=lower.findIndex(h=>h.includes("download")), guideIndex=lower.findIndex(h=>h.includes("instruções") || h.includes("guia"));
   if(softwareIndex<0)softwareIndex=0;
   if(statusIndex<0)statusIndex=1;
   if(linkIndex<0)linkIndex=2;
   if(commandIndex<0)commandIndex=3;
+  if(downloadIndex<0)downloadIndex=4;
+  if(guideIndex<0)guideIndex=5;
   const dataRows=hasHeader?parsed.slice(1):parsed;
-  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex]),link:normalize(r[linkIndex]),command:normalize(r[commandIndex])}))
-    .map(r=>DEPLOY_GUIDES[normalize(r.software).toLowerCase()]&&r.status===STATUS.CONSULTA?{...r,status:STATUS.DEPLOY_ORIENTACAO}:r)
+  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex]),link:normalize(r[linkIndex]),command:normalize(r[commandIndex]),download:normalize(r[downloadIndex]),guide:normalize(r[guideIndex])}))
     .filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.link,r.command));
   return{rows,empty:rows.length===0};
 }
@@ -166,29 +167,9 @@ function renderEmptyState(message){
   $("resultCount").textContent="0 registros";
 }
 
-// Referências oficiais verificadas para softwares sem dados completos na planilha.
-// Os endereços são páginas de download/documentação; versões e licenças podem variar.
-const DEPLOY_GUIDES = {
-  "microsoft power bi desktop": { download:"https://www.microsoft.com/download/details.aspx?id=58494", guide:"https://learn.microsoft.com/en-us/power-bi/fundamentals/desktop-get-the-desktop", command:'PBIDesktopSetup_x64.exe -quiet ACCEPT_EULA=1 -norestart' },
-  "power bi": { download:"https://www.microsoft.com/download/details.aspx?id=58494", guide:"https://learn.microsoft.com/en-us/power-bi/fundamentals/desktop-get-the-desktop", command:'PBIDesktopSetup_x64.exe -quiet ACCEPT_EULA=1 -norestart' },
-  "visual studio code": { download:"https://code.visualstudio.com/Download", guide:"https://code.visualstudio.com/docs/setup/windows", command:'VSCodeSetup-x64.exe /VERYSILENT /NORESTART /MERGETASKS=!runcode' },
-  "visual studio 2022": { download:"https://visualstudio.microsoft.com/downloads/", guide:"https://learn.microsoft.com/en-us/visualstudio/install/create-a-network-installation-of-visual-studio", command:'\\\\servidor\\compartilhamento\\VS\\vs_*.exe --quiet --wait' },
-  "docker desktop": { download:"https://www.docker.com/products/docker-desktop/", guide:"https://docs.docker.com/desktop/enterprise/enterprise-deployment/msi-install-and-configure/", command:'msiexec /i "DockerDesktop.msi" /quiet /norestart' },
-  "office 2024": { download:"https://www.microsoft.com/download/details.aspx?id=49117", guide:"https://learn.microsoft.com/en-us/microsoft-365-apps/deploy/overview-office-deployment-tool", command:'setup.exe /configure configuration.xml' },
-  "microsoft visio professional": { download:"https://www.microsoft.com/download/details.aspx?id=49117", guide:"https://learn.microsoft.com/en-us/microsoft-365-apps/deploy/overview-office-deployment-tool", command:'setup.exe /configure configuration.xml (defina o Product ID/licença do Visio no XML)' },
-  "visio": { download:"https://www.microsoft.com/download/details.aspx?id=49117", guide:"https://learn.microsoft.com/en-us/microsoft-365-apps/deploy/overview-office-deployment-tool", command:'setup.exe /configure configuration.xml (defina o Product ID/licença do Visio no XML)' },
-  "microsoft project": { download:"https://www.microsoft.com/download/details.aspx?id=49117", guide:"https://learn.microsoft.com/en-us/microsoft-365-apps/deploy/overview-office-deployment-tool", command:'setup.exe /configure configuration.xml (defina o Product ID/licença do Project no XML)' },
-  "virtual box": { download:"https://www.virtualbox.org/wiki/Downloads", guide:"https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/installation.html", command:'VirtualBox-<versao>-Win.exe -extract; msiexec /i VirtualBox-<versao>-Win.msi /qn /norestart' },
-  "wireshark": { download:"https://www.wireshark.org/download.html", guide:"https://www.wireshark.org/docs/wsug_html_chunked/ChBuildInstallWinInstall.html", command:'Wireshark-<versao>-x64.exe /S' },
-  "python": { download:"https://www.python.org/downloads/windows/", guide:"https://docs.python.org/3/using/windows.html", command:'python-<versao>-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0' },
-  "putty": { download:"https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html", guide:"https://the.earth.li/~sgtatham/putty/0.83/htmldoc/Chapter2.html", command:'msiexec /i putty-64bit-<versao>-installer.msi /qn /norestart' },
-  "gimp": { download:"https://www.gimp.org/downloads/", guide:"https://www.gimp.org/downloads/" },
-  "inkscape": { download:"https://inkscape.org/release/", guide:"https://inkscape.org/release/", command:'msiexec /i inkscape-<versao>.msi /qn /norestart (se MSI; confirme o pacote da versão)' }
-};
-
 function getDeployInfo(row){
-  const curated=DEPLOY_GUIDES[normalize(row.software).toLowerCase()]||{};
-  return {link:row.link||curated.download||"",guide:curated.guide||"",command:curated.command||row.command||""};
+  const source=row.link||"",isWeb=/^https:\/\//i.test(source),isNetwork=/^\\\\/.test(source);
+  return {download:row.download||(isWeb?source:""),network:isNetwork?source:"",other:source&&!isWeb&&!isNetwork?source:"",guide:row.guide||"",command:row.command||""};
 }
 
 function renderTable(){
@@ -197,10 +178,12 @@ function renderTable(){
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
     const i=allRows.indexOf(r);
-    const info=getDeployInfo(r), link=info.link||"—", command=info.command||"—";
-    const downloadLink=/^https:\/\//i.test(info.link)?`<a class="resource-link" href="${escapeHtml(info.link)}" target="_blank" rel="noopener noreferrer">Abrir link</a>`:"";
+    const info=getDeployInfo(r), link=info.download||info.network||info.other||"—", command=info.command||"—";
+    const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>`:"";
     const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>`:"";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink||`<span class="link-text">${escapeHtml(link)}</span>`}${guideLink}${info.link&&!downloadLink?`<button type="button" class="copy-link" data-copy-type="link" data-row-index="${i}">Copiar endereço</button>`:""}</td><td class="command-cell" title="${escapeHtml(command)}"><code class="command-text">${escapeHtml(command)}</code>${info.command?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
+    const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span><button type="button" class="copy-link" data-copy-type="link" data-row-index="${i}">Copiar local de rede</button>`:"";
+    const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>`:"";
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}">${escapeHtml(r.status||"Sem status")}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${!info.download&&!info.network&&!info.other?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}"><code class="command-text">${escapeHtml(command)}</code>${info.command?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
   }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
@@ -267,7 +250,7 @@ function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceA
 
 document.addEventListener("click",e=>{
   const copy=e.target.closest(".copy-link");
-  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i]){const info=getDeployInfo(allRows[i]);if(copy.dataset.copyType==="command")copyCommand(info.command,copy);else copyAddress(info.link,copy);}}
+  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i]){const info=getDeployInfo(allRows[i]);if(copy.dataset.copyType==="command")copyCommand(info.command,copy);else copyAddress(info.network||info.download||info.other,copy);}}
 });
 
 function init(){
