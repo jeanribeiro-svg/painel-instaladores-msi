@@ -190,14 +190,15 @@ function renderTable(){
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
     const i=allRows.indexOf(r);
     const info=getDeployInfo(r), link=info.download||info.network||info.other||"—", command=info.command||"—", commandIsInstallCommand=isInstallCommand(info.command);
-    const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>`:"";
-    const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>`:"";
+    const copyButton=(type,label)=>`<button type="button" class="copy-link copy-resource" data-copy-type="${type}" data-row-index="${i}" aria-label="Copiar ${label} de ${escapeHtml(r.software)}">Copiar</button>`;
+    const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>${copyButton("download","link do download")}`:"";
+    const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>${copyButton("guide","link das instruções")}`:"";
     const instructionNotes=[info.downloadNote,info.guideNote].filter(Boolean).map(note=>`<span class="instruction-note">${escapeHtml(note)}</span>`).join("");
-    const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span><button type="button" class="copy-link" data-copy-type="link" data-row-index="${i}">Copiar local de rede</button>`:"";
-    const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>`:"";
+    const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span><button type="button" class="copy-link copy-resource" data-copy-type="link" data-row-index="${i}" aria-label="Copiar caminho de rede de ${escapeHtml(r.software)}">Copiar</button>`:"";
+    const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>${copyButton("other","endereço")}`:"";
     const commandDisplay=commandIsInstallCommand?`<code class="command-text">${escapeHtml(command)}</code>`:info.command?`<span class="instruction-note command-note">${escapeHtml(command)}</span>`:"—";
     const displayedStatus=isAvailableStatus(r.status)?"Disponível":r.status||"Sem status";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${instructionNotes}${!info.download&&!info.network&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}">Copiar comando</button>`:""}</td></tr>`;
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${instructionNotes}${!info.download&&!info.network&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}" aria-label="Copiar comando de instalação de ${escapeHtml(r.software)}">Copiar</button>`:""}</td></tr>`;
   }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
@@ -264,7 +265,7 @@ function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceA
 
 document.addEventListener("click",e=>{
   const copy=e.target.closest(".copy-link");
-  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i]){const info=getDeployInfo(allRows[i]);if(copy.dataset.copyType==="command")copyCommand(info.command,copy);else copyAddress(info.network||info.download||info.other,copy);}}
+  if(copy){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i]){const info=getDeployInfo(allRows[i]),type=copy.dataset.copyType;const value=type==="command"?info.command:type==="guide"?info.guide:type==="download"?info.download:type==="other"?info.other:info.network||info.download||info.other;if(type==="command")copyCommand(value,copy);else copyAddress(value,copy);}}
 });
 
 function init(){

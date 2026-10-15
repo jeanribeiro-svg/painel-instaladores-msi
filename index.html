@@ -2,18 +2,18 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#073c70">
-<title>Painel de Instaladores MSI</title><link rel="stylesheet" href="style.css?v=20261013-46">
+<meta name="theme-color" content="#082d59">
+<title>Catálogo de softwares</title><link rel="stylesheet" href="style.css?v=20261015-48">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><span class="eyebrow">SESI • SENAI</span><h1>Painel de Instaladores MSI</h1><p>Controle dos softwares, status e locais dos pacotes para implantação em massa.</p></div>
-  <div class="update-box"><div class="update-label">Dados da planilha</div><strong id="lastUpdate">Aguardando consulta...</strong><span id="connectionStatus" class="connection loading">Iniciando conexão...</span></div>
+<header class="entitybar" aria-label="Entidades do Sistema FIESC">
+  <div class="entitybar-inner"><span class="entity-current">FIESC</span><span>SESI</span><span>SENAI</span><span>IEL</span><span>CIESC</span></div>
 </header>
 <main class="container">
   <div id="errorBox" class="notice hidden"></div>
   <section id="page-dashboard" class="page">
 <section class="overview">
+      <div class="page-intro"><div><span class="section-kicker">Gestão de aplicações</span><h1>Catálogo de softwares</h1><p>Consulte disponibilidade, orientações do fabricante e opções de implantação em rede.</p></div><div class="update-box"><span class="sync-dot"></span><div><span>Dados da planilha</span><strong id="lastUpdate">Aguardando consulta...</strong><small id="connectionStatus" class="connection loading">Iniciando conexão...</small></div></div></div>
       <div class="panel progress-panel">
         <div class="section-heading">
           <div><span class="section-kicker">Acompanhamento</span><h2>Progresso do catálogo</h2></div>
@@ -43,5 +43,5 @@
   </section>
 </main>
 <footer>Fonte: Google Sheets • atualização automática a cada 30 segundos</footer>
-<script src="script.js?v=20261013-47"></script>
+<script src="script.js?v=20261015-49"></script>
 </body></html>

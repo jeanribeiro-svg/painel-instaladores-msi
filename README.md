@@ -1,4 +1,4 @@
-# Painel de Instaladores MSI — v44
+# Catálogo de softwares — v49
 
 Dashboard HTML estático para GitHub Pages, alimentado por uma publicação CSV do Google Sheets.
 
@@ -21,7 +21,7 @@ O navegador consulta somente a URL CSV publicada configurada em `script.js`. Nã
 
 A coluna deve conter um exemplo de comando CMD ou PowerShell para instalação silenciosa, preferencialmente com instalação para todos os usuários (`ALLUSERS`) quando o instalador suportar esse parâmetro.
 
-O dashboard disponibiliza o botão `Copiar comando` para copiar o comando integralmente.
+O catálogo disponibiliza botões para copiar o endereço dos downloads e das instruções oficiais, os caminhos de rede e os comandos de instalação.
 
 Exemplos:
 
