@@ -93,7 +93,7 @@ a:focus-visible {
 .filter-card.active-filter strong,
 .filter-card.active-filter small { color: var(--brand); }
 .filter-card[data-filter="Em Consulta"] { border-top: 3px solid #dfa62b; }
-.filter-card[data-filter="Sem solução oficial"] { border-top: 3px solid #cf6666; }
+.filter-card[data-filter="Solução oficial não encontrada"] { border-top: 3px solid #cf6666; }
 .filter-card[data-filter="__disponivel__"] { border-top: 3px solid #258a62; }
 .filter-card[data-filter="Deploy via orientação do fabricante"] { border-top: 3px solid #8267bd; }
 

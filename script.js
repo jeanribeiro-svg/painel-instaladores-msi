@@ -6,7 +6,7 @@ const CONFIG = {
 
 const STATUS = {
   CONSULTA: "Em Consulta",
-  SEM_SOLUCAO: "Sem solução oficial",
+  SEM_SOLUCAO: "Solução oficial não encontrada",
   DISPONIVEL: "Disponível no \\Mídias",
   FABRICANTE: "Disponível pelo Fabricante",
   DEPLOY_ORIENTACAO: "Deploy via orientação do fabricante"
@@ -18,11 +18,12 @@ let allRows = [], hasLoadedData = false, activeFilter = "", pendingLoad = null;
 function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").replace(/^\uFEFF/, "").replace(/\u00A0/g, " ").trim(); }
 function normalizeHeader(value) { return normalize(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " "); }
-function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase(); }
+function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
 function canonicalStatus(value) {
   const raw=normalize(value), key=normalizeStatus(raw);
   if (key === normalizeStatus(STATUS.CONSULTA)) return STATUS.CONSULTA;
-  if (key === normalizeStatus(STATUS.SEM_SOLUCAO) || key === normalizeStatus("Sem pacote oficial")) return STATUS.SEM_SOLUCAO;
+  if ([STATUS.SEM_SOLUCAO, "Solução oficinal não encontrada", "Sem solução oficial", "Sem orientação oficial", "Sem pacote oficial"]
+    .some(label => key === normalizeStatus(label))) return STATUS.SEM_SOLUCAO;
   if (key === normalizeStatus(STATUS.DISPONIVEL) || key === normalizeStatus("Disponível no Mídias")) return STATUS.DISPONIVEL;
   if (key === normalizeStatus(STATUS.FABRICANTE)) return STATUS.FABRICANTE;
   if (key === normalizeStatus(STATUS.DEPLOY_ORIENTACAO) || key === normalizeStatus("Deploy via rede") || key === normalizeStatus("Deploy via rede (manual)") || key === normalizeStatus("Manual de deploy via rede")) return STATUS.DEPLOY_ORIENTACAO;
@@ -178,7 +179,7 @@ function updateDashboard(){
   if($("progressDeployOrientacaoPercent")) $("progressDeployOrientacaoPercent").textContent=`${deployOrientacaoPercent.toFixed(1)}%`;
   if($("progressConsultaCount")) $("progressConsultaCount").textContent=consulta;
   if($("progressConsultaPercent")) $("progressConsultaPercent").textContent=`${consultaPercent.toFixed(1)}%`;
-  $("progressDetail").textContent=`Disponível: ${disponivelTotal}. Deploy via orientação do fabricante: ${deployOrientacao}. Sem solução oficial: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
+  $("progressDetail").textContent=`Disponível: ${disponivelTotal}. Deploy via orientação do fabricante: ${deployOrientacao}. Solução oficial não encontrada: ${semSolucao}. Total definido: ${acompanhado} de ${total}.`;
 
   renderTable();
 }

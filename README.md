@@ -1,4 +1,4 @@
-# Catálogo de softwares — v53
+# Catálogo de softwares — v54
 
 Dashboard estático para GitHub Pages, com dados consultados da aba `Softwares` do Google Sheets por meio do CSV publicado.
 
@@ -23,7 +23,7 @@ O catálogo consulta apenas a URL CSV publicada configurada em `script.js`. O bo
 - `Disponível no Mídias`
 - `Disponível pelo Fabricante`
 - `Deploy via orientação do fabricante`
-- `Sem solução oficial`
+- `Solução oficial não encontrada`
 
 Na interface, os dois status de disponibilidade são exibidos como `Disponível` e reunidos no mesmo filtro.
 
