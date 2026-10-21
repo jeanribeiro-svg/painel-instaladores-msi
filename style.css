@@ -149,11 +149,11 @@ input:focus,
 select:focus { border-color: #5b9bd3; box-shadow: 0 0 0 3px rgba(7, 86, 165, .12); }
 
 .table-wrap { max-height: min(66vh, 760px); min-height: 310px; overflow: auto; border: 1px solid var(--line); border-radius: 13px; background: #fff; scrollbar-color: #bdcad8 transparent; scrollbar-width: thin; }
-.software-table { width: 100%; min-width: 980px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
-.software-table col.col-software { width: 20%; }
-.software-table col.col-status { width: 21%; }
-.software-table col.col-link { width: 31%; }
-.software-table col.col-command { width: 28%; }
+.software-table { width: 100%; min-width: 900px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.software-table col.col-software { width: 22%; }
+.software-table col.col-status { width: 20%; }
+.software-table col.col-download { width: 27%; }
+.software-table col.col-instructions { width: 31%; }
 .software-table th,
 .software-table td { min-width: 0; padding: 13px 14px; border-bottom: 1px solid #e9eef4; text-align: left; vertical-align: middle; }
 .software-table th { position: sticky; z-index: 1; top: 0; color: #586b82; background: #f7f9fc; font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -172,7 +172,6 @@ select:focus { border-color: #5b9bd3; box-shadow: 0 0 0 3px rgba(7, 86, 165, .12
 .software-table .link-cell { overflow-wrap: anywhere; }
 .software-table .link-text { display: inline-block; max-width: 100%; margin: 2px 5px 2px 0; color: #41566e; vertical-align: middle; }
 .software-table .instruction-note { display: block; margin: 4px 0; color: #53657c; font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
-.software-table .command-note { padding: 3px 0; }
 .software-table .resource-link { display: inline-flex; align-items: center; margin: 2px 5px 3px 0; padding: 6px 8px; border: 1px solid #b8d2eb; border-radius: 7px; color: var(--brand); background: #f4f9fe; font-size: 10px; font-weight: 750; line-height: 1.2; text-decoration: none; white-space: nowrap; }
 .software-table .resource-link:hover { border-color: var(--brand); color: #fff; background: var(--brand); }
 .software-table .resource-link.guide-link { border-color: #d5deea; color: #53657c; background: #fff; }
@@ -181,9 +180,6 @@ select:focus { border-color: #5b9bd3; box-shadow: 0 0 0 3px rgba(7, 86, 165, .12
 .software-table .copy-link:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
 .software-table .copy-link.copied,
 .open-link.copied { border-color: #18794e !important; color: #fff !important; background: #18794e !important; }
-.software-table .command-cell { overflow: hidden; }
-.software-table .command-text { display: inline-block; max-width: calc(100% - 116px); margin: 2px 2px 2px 0; padding: 6px 7px; overflow: hidden; border: 1px solid #e3e9f0; border-radius: 7px; color: #40536a; background: #f5f7fa; font-family: Consolas, "Courier New", monospace; font-size: 10px; line-height: 1.35; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap; }
-.software-table .copy-command { vertical-align: middle; }
 .empty { padding: 30px !important; color: #6e7d90 !important; text-align: center !important; font-weight: 500 !important; }
 
 footer { padding: 0 20px 26px; color: #738398; font-size: 11px; text-align: center; }
@@ -224,7 +220,7 @@ footer { padding: 0 20px 26px; color: #738398; font-size: 11px; text-align: cent
   .table-head h2 { font-size: 17px; }
   .section-heading > strong { font-size: 20px; }
   .table-wrap { max-height: 64vh; min-height: 240px; }
-  .software-table { min-width: 1000px; }
+  .software-table { min-width: 900px; }
   .software-table th,
   .software-table td { padding: 11px 10px; }
 }

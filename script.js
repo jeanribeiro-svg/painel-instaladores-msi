@@ -54,17 +54,41 @@ function parseSheetData(text) {
   const parsed=parseCSV(text.replace(/^\uFEFF/, ""));
   if(!parsed.length)return{rows:[],empty:true};
   const headers=parsed[0].map(normalizeHeader);
-  const hasHeader=headers.some(h=>["software","status"].includes(h))||headers.some(h=>/comando|instalacao|download|instrucoes|implantacao/.test(h));
+  const hasHeader=headers.includes("software")&&headers.includes("status");
   const findHeader=predicate=>headers.findIndex(predicate);
   const softwareIndex=findHeader(h=>h==="software"), statusIndex=findHeader(h=>h==="status");
-  const linkIndex=findHeader(h=>["link","link / rede","link/rede","rede","caminho de rede","acesso de rede"].includes(h));
-  const commandIndex=findHeader(h=>/comando|instalacao/.test(h)&&!/instrucoes|guia/.test(h));
+  const resourceIndex=findHeader(h=>[
+    "link download / pasta da rede","link de download / pasta da rede",
+    "link download/pasta da rede","link de download/pasta da rede",
+    "link / rede","link/rede","caminho de rede","acesso de rede"
+  ].includes(h));
   const downloadIndex=findHeader(h=>/download/.test(h));
   const guideIndex=findHeader(h=>/instrucoes|implantacao|deploy/.test(h));
+  // Compatibility with the previous six-column sheet: use its official
+  // download and instructions columns while the owner migrates the headers.
+  const legacyLinkIndex=findHeader(h=>h==="link"||h==="rede");
   const dataRows=hasHeader?parsed.slice(1):parsed;
-  const indexFor=(index,legacyIndex)=>hasHeader?index:legacyIndex;
-  const rows=dataRows.map(r=>({software:normalize(r[indexFor(softwareIndex,0)]),status:canonicalStatus(r[indexFor(statusIndex,1)]),link:normalize(r[indexFor(linkIndex,2)]),command:normalize(r[indexFor(commandIndex,3)]),download:normalize(r[indexFor(downloadIndex,-1)]),guide:normalize(r[indexFor(guideIndex,-1)]))}))
-    .filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.link,r.command));
+  const rows=dataRows.map(r=>{
+    let resource=normalize(r[hasHeader?resourceIndex:2]);
+    let instructions=normalize(r[hasHeader?guideIndex:3]);
+    if(hasHeader&&(resourceIndex<0||headers[resourceIndex]==="link / rede"||headers[resourceIndex]==="link/rede")){
+      const oldLink=normalize(r[resourceIndex>=0?resourceIndex:legacyLinkIndex]);
+      const oldDownload=normalize(r[downloadIndex]);
+      // Old Link / rede values were sometimes guidance URLs. Preserve only
+      // real UNC paths there; otherwise the official download column is C.
+      resource=/^\\\\/.test(oldLink)?oldLink:oldDownload;
+    }
+    if(hasHeader&&guideIndex>=0&&/comando|exemplo/.test(headers[guideIndex])){
+      const oldGuideIndex=findHeader(h=>/instrucoes/.test(h));
+      instructions=normalize(r[oldGuideIndex]);
+    }
+    return {
+      software:normalize(r[hasHeader?softwareIndex:0]),
+      status:canonicalStatus(r[hasHeader?statusIndex:1]),
+      resource,
+      instructions
+    };
+  }).filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.resource,r.instructions));
   return{rows,empty:rows.length===0};
 }
 
@@ -164,43 +188,18 @@ function renderEmptyState(message){
   $("resultCount").textContent="0 registros";
 }
 
-function getDeployInfo(row){
-  const source=row.link||"",isWeb=/^https?:\/\//i.test(source),isNetwork=/^\\\\/.test(source);
-  const downloadValue=row.download||"",guideValue=row.guide||"";
-  const downloadUrl=/^https?:\/\//i.test(downloadValue)?downloadValue:"";
-  const guideUrl=/^https?:\/\//i.test(guideValue)?guideValue:"";
-  return {
-    download:downloadUrl,
-    downloadNote:downloadValue&&!downloadUrl?downloadValue:"",
-    network:isNetwork?source:"",
-    reference:isWeb&&source!==downloadUrl&&source!==guideUrl?source:"",
-    other:source&&!isWeb&&!isNetwork?source:"",
-    guide:guideUrl&&guideUrl!==downloadUrl?guideUrl:"",
-    guideNote:guideValue&&!guideUrl?guideValue:"",
-    command:row.command||""
-  };
-}
-
-function isInstallCommand(value){
-  return /^(?:msiexec\b|setup(?:\.exe)?\b|start-process\b|python(?:\.exe)?\b|npm\b|fusion\s+client\s+downloader\.exe\b|pbidesktopsetup(?:_x64)?\.exe\b|(?:"[^"\r\n]+"|[^\s"']+)\.(?:exe|msi|bat|cmd)\b)/i.test(String(value||"").trim());
-}
-
 function renderTable(){
   const search=normalize($("search")?.value).toLowerCase(),filter=activeFilter===AVAILABLE_FILTER?AVAILABLE_FILTER:canonicalStatus(activeFilter);
   const rows=allRows.filter(r=>(!search||r.software.toLowerCase().includes(search))&&(!filter||(filter===AVAILABLE_FILTER?isAvailableStatus(r.status):r.status===filter)));
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
-    const i=allRows.indexOf(r);
-    const info=getDeployInfo(r), link=info.download||info.network||info.reference||info.other||"—", command=info.command||"—", commandIsInstallCommand=isInstallCommand(info.command);
-    const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>`:"";
-    const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>`:"";
-    const instructionNotes=[info.downloadNote,info.guideNote].filter(Boolean).map(note=>`<span class="instruction-note">${escapeHtml(note)}</span>`).join("");
-    const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span>`:"";
-    const referenceLink=info.reference?`<a class="resource-link guide-link" href="${escapeHtml(info.reference)}" target="_blank" rel="noopener noreferrer">Referência na planilha</a>`:"";
-    const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>`:"";
-    const commandDisplay=commandIsInstallCommand?`<code class="command-text">${escapeHtml(command)}</code>`:info.command?`<span class="instruction-note command-note">${escapeHtml(command)}</span>`:"—";
+    const resource=normalize(r.resource),instructions=normalize(r.instructions);
+    const isUrl=/^https?:\/\//i.test(resource),isNetwork=/^\\\\/.test(resource);
+    const resourceContent=isUrl?`<a class="resource-link" href="${escapeHtml(resource)}" target="_blank" rel="noopener noreferrer">Acessar download</a>`:
+      isNetwork?`<span class="link-text" title="${escapeHtml(resource)}">${escapeHtml(resource)}</span>`:"—";
+    const instructionsContent=/^https?:\/\//i.test(instructions)?`<a class="resource-link guide-link" href="${escapeHtml(instructions)}" target="_blank" rel="noopener noreferrer">Abrir instruções</a>`:"—";
     const displayedStatus=isAvailableStatus(r.status)?"Disponível":r.status||"Sem status";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${guideLink}${networkLink}${referenceLink}${otherLink}${instructionNotes}${!info.download&&!info.guide&&!info.network&&!info.reference&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}" aria-label="Copiar comando de instalação de ${escapeHtml(r.software)}">Copiar</button>`:""}</td></tr>`;
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(resource)}">${resourceContent}</td><td class="link-cell" title="${escapeHtml(instructions)}">${instructionsContent}</td></tr>`;
   }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
@@ -248,26 +247,7 @@ function setActiveFilter(filter){
   renderTable();
 }
 
-function copyValue(value,button,label="Copiar"){
-  const x=String(value??"").replace(/^\uFEFF/,"").replace(/\u00A0/g," ").trim();
-  if(!x)return;
-  try{
-    if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(x).then(()=>copiedFeedback(button)).catch(()=>fallbackCopy(x,button));
-    else fallbackCopy(x,button);
-  }catch(e){fallbackCopy(x,button);}
-}
-function copyCommand(command,button){copyValue(command,button,"Copiar comando");}
-function fallbackCopy(x,button){
-  const ta=document.createElement("textarea");ta.value=x;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.focus();ta.select();
-  try{if(!document.execCommand("copy"))throw new Error("copy failed");copiedFeedback(button);}catch(e){alert("Não foi possível copiar o endereço.\n\n"+x);}finally{ta.remove();}
-}
-function copiedFeedback(button){if(!button)return;const original=button.textContent;button.textContent="✓ Copiado!";button.classList.add("copied");setTimeout(()=>{button.textContent=original;button.classList.remove("copied");},1600);}
 function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
-
-document.addEventListener("click",e=>{
-  const copy=e.target.closest(".copy-link");
-  if(copy?.dataset.copyType==="command"){const i=Number(copy.dataset.rowIndex);if(Number.isInteger(i)&&allRows[i])copyCommand(getDeployInfo(allRows[i]).command,copy);}
-});
 
 function init(){
   $("search").addEventListener("input",renderTable);
