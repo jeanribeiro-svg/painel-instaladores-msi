@@ -1,4 +1,4 @@
-# Catálogo de softwares — v50
+# Catálogo de softwares — v51
 
 Dashboard HTML estático para GitHub Pages, alimentado por uma publicação CSV do Google Sheets.
 
@@ -13,7 +13,7 @@ A aba `Softwares` utiliza estas colunas:
 5. `Download oficial`
 6. `Instruções oficiais`
 
-O dashboard lê nome, status, links e comando diretamente dessas colunas no CSV publicado do Google Sheets. A coluna `LINK` continua sendo usada para caminho de rede ou link legado; os dois novos campos oferecem separadamente a página oficial e as instruções.
+O dashboard lê nome, status, links e comando diretamente do CSV publicado do Google Sheets. Os campos de download e de instruções são independentes e identificados pelo cabeçalho, não pela posição da coluna. Assim, mover `Download oficial` para a coluna C e excluir uma coluna intermediária não troca os dados, desde que os cabeçalhos `Download oficial` (ou `Link de download`) e `Instruções oficiais` continuem corretos. Uma URL de `Link / rede` não é promovida automaticamente a download; caminhos de rede permanecem distintos.
 
 O navegador consulta somente a URL CSV publicada configurada em `script.js`. Não há consulta alternativa `gviz`, para evitar que respostas com versões ou formatos diferentes da publicação se alternem. Se o botão Atualizar e a atualização automática coincidirem, a página compartilha a mesma requisição em andamento.
 
@@ -21,7 +21,7 @@ O navegador consulta somente a URL CSV publicada configurada em `script.js`. Nã
 
 A coluna deve conter um exemplo de comando CMD ou PowerShell para instalação silenciosa, preferencialmente com instalação para todos os usuários (`ALLUSERS`) quando o instalador suportar esse parâmetro.
 
-Os links para downloads e instruções oficiais permanecem clicáveis, e os caminhos de rede aparecem como texto. O botão de cópia fica disponível somente para exemplos de comandos de instalação.
+Os links para downloads e instruções oficiais permanecem clicáveis, e os caminhos de rede aparecem como texto. Uma mesma URL não é mostrada duas vezes como download e instrução. O botão de cópia fica disponível somente para exemplos de comandos de instalação.
 
 Exemplos:
 

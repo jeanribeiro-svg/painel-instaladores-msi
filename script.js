@@ -17,6 +17,7 @@ function isAvailableStatus(status) { return status===STATUS.DISPONIVEL||status==
 let allRows = [], hasLoadedData = false, activeFilter = "", pendingLoad = null;
 function $(id) { return document.getElementById(id); }
 function normalize(value) { return String(value ?? "").replace(/^\uFEFF/, "").replace(/\u00A0/g, " ").trim(); }
+function normalizeHeader(value) { return normalize(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " "); }
 function normalizeStatus(value) { return normalize(value).replace(/\\+/g, "\\").replace(/\s+/g, " ").toLowerCase(); }
 function canonicalStatus(value) {
   const raw=normalize(value), key=normalizeStatus(raw);
@@ -52,17 +53,17 @@ function parseCSV(text) {
 function parseSheetData(text) {
   const parsed=parseCSV(text.replace(/^\uFEFF/, ""));
   if(!parsed.length)return{rows:[],empty:true};
-  const first=parsed[0].map(normalize), lower=first.map(h=>h.toLowerCase());
-  const hasHeader=lower.some(h=>h==="software") || lower.some(h=>h==="status") || lower.some(h=>h==="link") || lower.some(h=>h.includes("comando") || h.includes("instalação") || h.includes("download") || h.includes("instruções"));
-  let softwareIndex=lower.findIndex(h=>h==="software"), statusIndex=lower.findIndex(h=>h==="status"), linkIndex=lower.findIndex(h=>h==="link" || h.includes("link / rede")), commandIndex=lower.findIndex(h=>h.includes("comando") || h.includes("instalação")), downloadIndex=lower.findIndex(h=>h.includes("download")), guideIndex=lower.findIndex(h=>h.includes("instruções") || h.includes("guia"));
-  if(softwareIndex<0)softwareIndex=0;
-  if(statusIndex<0)statusIndex=1;
-  if(linkIndex<0)linkIndex=2;
-  if(commandIndex<0)commandIndex=3;
-  if(downloadIndex<0)downloadIndex=4;
-  if(guideIndex<0)guideIndex=5;
+  const headers=parsed[0].map(normalizeHeader);
+  const hasHeader=headers.some(h=>["software","status"].includes(h))||headers.some(h=>/comando|instalacao|download|instrucoes|implantacao/.test(h));
+  const findHeader=predicate=>headers.findIndex(predicate);
+  const softwareIndex=findHeader(h=>h==="software"), statusIndex=findHeader(h=>h==="status");
+  const linkIndex=findHeader(h=>["link","link / rede","link/rede","rede","caminho de rede","acesso de rede"].includes(h));
+  const commandIndex=findHeader(h=>/comando|instalacao/.test(h)&&!/instrucoes|guia/.test(h));
+  const downloadIndex=findHeader(h=>/download/.test(h));
+  const guideIndex=findHeader(h=>/instrucoes|implantacao|deploy/.test(h));
   const dataRows=hasHeader?parsed.slice(1):parsed;
-  const rows=dataRows.map(r=>({software:normalize(r[softwareIndex]),status:canonicalStatus(r[statusIndex]),link:normalize(r[linkIndex]),command:normalize(r[commandIndex]),download:normalize(r[downloadIndex]),guide:normalize(r[guideIndex])}))
+  const indexFor=(index,legacyIndex)=>hasHeader?index:legacyIndex;
+  const rows=dataRows.map(r=>({software:normalize(r[indexFor(softwareIndex,0)]),status:canonicalStatus(r[indexFor(statusIndex,1)]),link:normalize(r[indexFor(linkIndex,2)]),command:normalize(r[indexFor(commandIndex,3)]),download:normalize(r[indexFor(downloadIndex,-1)]),guide:normalize(r[indexFor(guideIndex,-1)]))}))
     .filter(r=>r.software&&!isHeaderRow(r.software,r.status,r.link,r.command));
   return{rows,empty:rows.length===0};
 }
@@ -169,11 +170,12 @@ function getDeployInfo(row){
   const downloadUrl=/^https?:\/\//i.test(downloadValue)?downloadValue:"";
   const guideUrl=/^https?:\/\//i.test(guideValue)?guideValue:"";
   return {
-    download:downloadUrl||(isWeb?source:""),
+    download:downloadUrl,
     downloadNote:downloadValue&&!downloadUrl?downloadValue:"",
     network:isNetwork?source:"",
+    reference:isWeb&&source!==downloadUrl&&source!==guideUrl?source:"",
     other:source&&!isWeb&&!isNetwork?source:"",
-    guide:guideUrl,
+    guide:guideUrl&&guideUrl!==downloadUrl?guideUrl:"",
     guideNote:guideValue&&!guideUrl?guideValue:"",
     command:row.command||""
   };
@@ -189,15 +191,16 @@ function renderTable(){
   $("resultCount").textContent=`${rows.length} registro${rows.length===1?'':'s'}`;
   $("softwareTable").innerHTML=rows.length?rows.map(r=>{
     const i=allRows.indexOf(r);
-    const info=getDeployInfo(r), link=info.download||info.network||info.other||"—", command=info.command||"—", commandIsInstallCommand=isInstallCommand(info.command);
+    const info=getDeployInfo(r), link=info.download||info.network||info.reference||info.other||"—", command=info.command||"—", commandIsInstallCommand=isInstallCommand(info.command);
     const downloadLink=info.download?`<a class="resource-link" href="${escapeHtml(info.download)}" target="_blank" rel="noopener noreferrer">Página oficial / download</a>`:"";
     const guideLink=info.guide?`<a class="resource-link guide-link" href="${escapeHtml(info.guide)}" target="_blank" rel="noopener noreferrer">Instruções</a>`:"";
     const instructionNotes=[info.downloadNote,info.guideNote].filter(Boolean).map(note=>`<span class="instruction-note">${escapeHtml(note)}</span>`).join("");
     const networkLink=info.network?`<span class="link-text" title="${escapeHtml(info.network)}">${escapeHtml(info.network)}</span>`:"";
+    const referenceLink=info.reference?`<a class="resource-link guide-link" href="${escapeHtml(info.reference)}" target="_blank" rel="noopener noreferrer">Referência na planilha</a>`:"";
     const otherLink=info.other?`<span class="link-text">${escapeHtml(info.other)}</span>`:"";
     const commandDisplay=commandIsInstallCommand?`<code class="command-text">${escapeHtml(command)}</code>`:info.command?`<span class="instruction-note command-note">${escapeHtml(command)}</span>`:"—";
     const displayedStatus=isAvailableStatus(r.status)?"Disponível":r.status||"Sem status";
-    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${networkLink}${otherLink}${guideLink}${instructionNotes}${!info.download&&!info.network&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}" aria-label="Copiar comando de instalação de ${escapeHtml(r.software)}">Copiar</button>`:""}</td></tr>`;
+    return `<tr><td>${escapeHtml(r.software)}</td><td><span class="status ${statusClass(r.status)}" title="${escapeHtml(r.status||"")}">${escapeHtml(displayedStatus)}</span></td><td class="link-cell" title="${escapeHtml(link)}">${downloadLink}${guideLink}${networkLink}${referenceLink}${otherLink}${instructionNotes}${!info.download&&!info.guide&&!info.network&&!info.reference&&!info.other&&!instructionNotes?"—":""}</td><td class="command-cell" title="${escapeHtml(command)}">${commandDisplay}${commandIsInstallCommand?`<button type="button" class="copy-link copy-command" data-copy-type="command" data-row-index="${i}" aria-label="Copiar comando de instalação de ${escapeHtml(r.software)}">Copiar</button>`:""}</td></tr>`;
   }).join(""):`<tr><td colspan="4" class="empty">${allRows.length?"Nenhum software encontrado para os filtros atuais.":"Nenhum software cadastrado."}</td></tr>`;
 }
 
